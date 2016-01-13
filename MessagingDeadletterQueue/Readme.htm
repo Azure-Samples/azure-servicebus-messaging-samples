@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip"
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD>
+  <TITLE>Windows Azure AppFabric Dead Letter Queue Sample</TITLE>
+  <META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+  <META name=save content=history></META>
+  <LINK rel=stylesheet type=text/css
+  href="../../../CommonFiles/Classic.css"></LINK>
+
+  <META name=GENERATOR content="MSHTML 8.00.6001.18783">
+    <style type="text/css">
+      .style2 {
+      font-family: monospace;
+      font-size: small;
+      color: #000000;
+      }
+      </style>
+  </HEAD>
+<BODY>
+  <DIV id=header>
+    <TABLE id=topTable width="100%">
+      <TBODY>
+        <TR id=headerTableRow1>
+          <TD align=left>
+            <SPAN id=runningHeaderText></SPAN>
+          </TD>
+        </TR>
+        <TR id=headerTableRow2>
+          <TD align=left>
+            <SPAN id=nsrTitle>Windows Azure AppFabric Dead Letter Queue Sample</SPAN>
+          </TD>
+        </TR>
+        <TR id=headerTableRow3>
+          <TD></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+  </DIV>
+  <DIV id=mainSection>
+    <DIV id=mainBody>
+      <P>
+        This sample demonstrates how to use the Windows Azure AppFabric
+        Service Bus and the messaging &quot;dead letter queue&quot; functionality.
+      </P>
+      <P>
+        The sample shows a simple sender and receiver communicating via a Service Bus 
+          queue. Both sender and receiver prompt for service namespace credentials. (These
+        are used to authenticate with the Access Control service, and acquire an access
+        token that proves to the Service Bus insfrastructure that the client is
+        authorized to access the queue.) The sender creates the queue, and sends messages
+          simulating different orders into it. The receiver reads orders until the queue is empty,
+          simulating failure on processing some messages. The failing messages are 
+          dead-lettered. At the end of the samples, the dead-lettered messages are 
+          received and logged.</P>
+        <P>
+            It is also possible to create a separate receiver 
+            application for reading the messages in 
+            the dead letter queue, and performing additional actions for each message (such 
+            as updating order types to include these unknown orders).</P>
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+              <TR>
+                <TH align=leftNote: </TH>&nbsp;</TR>
+              <TR>
+                <TD><b>Note:</b> 
+            Dead-lettering also applies to topics and subscriptions, where each subscription 
+            has its own dead letter subqueue. It can be accessed in a similar way to a 
+            subscription&#39;s dead letter subqueue: 
+            subscriptionClient.CreateReceiver(&quot;$DeadLetterQueue&quot;).</TD></TR></TBODY></TABLE>
+      <H2 class=heading>Prerequisites</H2>
+      <DIV id=sectionSection0 class=section>
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <P xmlns="">
+            If you haven't already done so, please read the release notes
+            document that explains how to sign up for a Windows Azure AppFabric
+            account and how to configure your environment.
+          </P>
+        </content>
+      </DIV>
+      <H2 class=heading>Sender</H2>
+      <DIV id=sectionSection1 class="section">
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <P xmlns="">
+              The sender&#39;s flow:</P>
+              <ul>
+                <li>Obtains user credentials and creates a NamespaceManager (namespaceClient) and a 
+                    MessagingFactory (messagingFactory). These entities hold the credentials and are 
+                    used for all messaging management and runtime operations.</li>
+                  <li>Creates queue using the namespaceClient</li>
+                  <li>Sends messages to queue</li>
+                  <li>Waits for user input to delete queue</li>
+            </ul>
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+              <TR>
+                <TH align=leftNote: </TH>&nbsp;</TR>
+              <TR>
+                <TD><b>Note:</b> The static <code>
+              ServiceBusEnvironment.CreateServiceUri
+            </code> function is provided to help construct the URI with the correct format and 
+                    domain name. It is strongly recommended that you use this function instead of 
+                    building the URI from scratch because the URI construction logic and format 
+                    might change in future releases.</TD></TR></TBODY></TABLE>
+        </content>
+      </DIV>
+      <H2 class=heading>Receiver</H2>
+      <DIV id=sectionSection2 class=section>
+        <content
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <P xmlns="">
+              The receiver&#39;s flow:</P>
+            <ul>
+                <li>Gets user credentials, but only creates a MessagingFactory and a QueueClient 
+                    (for runtime operations), since the queue was created by the sender</li>
+                  <li>Receives messages from the queue and processes them.</li>
+                <li>Processing simulates an error by failing to process random messages 
+                    for MaxRetryCount times. Once a message cannot be processed MaxRetryCount times, 
+                    the message is dead-lettered. </li>
+                  <li>Reads and logs messages from the dead-letter queue (separate dead-letter queue 
+                      message receiver created)</li>
+            </ul>
+        </content>
+      </DIV>
+        <P xmlns="">
+            <table cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <th </th="" align="leftNote:">
+                        &nbsp;</th>
+                </tr>
+                <tr>
+                    <td>
+                        <b>Note:</b> Messages can only be dead-lettered if they have been received using 
+                        the PeekLock receive mode. In comparison to the simpler ReceiveAndDeleted mode 
+                        (message deleted on receiving), the PeekLock mode requires a message to either 
+                        be completed (Complete()) to take the message out of the queue. If a PeekLock 
+                        receiver calls Abandon() on a message, or does not Abandon() or Complete() with 
+                        the message lock timeout, the message will be made available on the queue, for 
+                        processing by any receiver.</td>
+                </tr>
+            </table>
+        </P>
+    </DIV>
+    <H2 class=heading>Running the Sample</H2>
+    <DIV id=DIV1 class=section>
+      <content
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+        <P xmlns="">
+          To run the sample, build the solution in Visual Studio or from the
+          command line, then run the two resulting executable files. Start the sender first, 
+            then start the receiver. Once the receiver has completed, close the sender to 
+            clean up the messaging entities. Both programs prompt for your AppFabric service namespace and the issuer credentials. For the issuer secret,
+          be sure to use the "Default Key" value from the AppFabric portal, rather than one of the management keys.</P>
+        <P xmlns="">
+            Note that the expected output below is a sample only - it may not exactly match 
+            your run because the sample randomly decides which messages should be 
+            dead-lettered.</P>
+        <P xmlns="">
+          <B>Expected Output - Sender</B>
+        </P>
+        <DIV class=code xmlns="">
+          <SPAN codeLanguage="other">
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+                <TR>
+                  <TD colSpan=2>
+                    <PRE class="style2">
+                        Please provide the namespace to use:
+                        &lt;service namespace&gt;
+                        Please provide the Issuer name to use:
+                        &lt;issuer name&gt;
+                        Please provide the Issuer key to use:
+                        &lt;issuer secret&gt;
+                        Creating queue 'OrdersService'...
+                        Sending messages to queue...
+                        Sending message of order type DeliveryOrder.
+                        Sending message of order type StayInOrder.
+                        Sending message of order type TakeOutOrder.
+                        Sending message of order type TakeOutOrder.
+                        Sending message of order type DeliveryOrder.
+
+                        Press [Enter] to delete queue and exit.
+                    </PRE>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </SPAN>
+        </DIV>
+        <P xmlns="">
+          <B>Expected Output - Receiver</B>
+        </P>
+        <DIV class=code xmlns="">
+          <SPAN codeLanguage="other">
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+                <TR>
+                  <TD colSpan=2>
+                    <PRE>
+                        Please provide the namespace to use:
+                        &lt;service namespace&gt;
+                        Please provide the Issuer name to use:
+                        &lt;issuer name&gt;
+                        Please provide the Issuer key to use:
+                        &lt;issuer secret&gt;
+                        Reading messages from queue...
+                        Adding Order 1 with 10 number of items and 15 total to DeadLetter queue
+                        Received Order 2 with 15 number of items and 500 total
+                        Adding Order 3 with 1 number of items and 25 total to DeadLetter queue
+                        Adding Order 5 with 3 number of items and 25 total to DeadLetter queue
+                        Received Order 4 with 100 number of items and 100000 total
+
+                        No more messages left in queue. Logging dead lettered messages...
+                        Order 1 with 10 number of items and 15 total logged from DeadLetter queue. DeadLettering Reason is "UnableToProcess" and
+                         Deadlettering error description is "Failed to process in reasonable attempts"
+                        Order 3 with 1 number of items and 25 total logged from DeadLetter queue. DeadLettering Reason is "UnableToProcess" and
+                        Deadlettering error description is "Failed to process in reasonable attempts"
+                        Order 5 with 3 number of items and 25 total logged from DeadLetter queue. DeadLettering Reason is "UnableToProcess" and
+                        Deadlettering error description is "Failed to process in reasonable attempts"
+
+                        Press [Enter] to exit.
+                    </PRE>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </SPAN>
+        </DIV>
+      </content>
+    </DIV>
+    <!--[if gte IE 5]><tool:tip avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]-->
+  </DIV>
+  <P xmlns="">
+    <hr />
+    Did you find this information useful?
+    <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+      Please send your suggestions and comments about the documentation.
+    </a>
+  </P>
+  </DIV>
+</BODY></HTML>

@@ -1,0 +1,264 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip"
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD>
+  <TITLE>Session Messages Sample</TITLE>
+  <META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+  <META name=save content=history></META>
+  <LINK rel=stylesheet type=text/css
+  href="../../../CommonFiles/Classic.css"></LINK>
+
+  <META name=GENERATOR content="MSHTML 8.00.6001.18783">
+    <style type="text/css">
+      .style2 {
+      font-family: monospace;
+      font-size: small;
+      color: #000000;
+      }
+      </style>
+  </HEAD>
+<BODY>
+  <DIV id=header>
+    <TABLE id=topTable width="100%">
+      <TBODY>
+        <TR id=headerTableRow1>
+          <TD align=left>
+            <SPAN id=runningHeaderText></SPAN>
+          </TD>
+        </TR>
+        <TR id=headerTableRow2>
+          <TD align=left>
+              <SPAN id=nsrTitle>Request/Response Sample</SPAN>
+          </TD>
+        </TR>
+        <TR id=headerTableRow3>
+          <TD></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+  </DIV>
+  <DIV id=mainSection>
+    <DIV id=mainBody>
+      <P>
+          This sample demonstrates how to use the Windows Azure  Service Bus and 
+          the Request/Response functionality.
+      </P>
+      <P>
+          The sample shows simple clients and servers communicating via a Service Bus 
+          queue. The SampleManager first prompts for service namespace credentials. These 
+          are used to authenticate with the Access Control service, and acquire an access 
+          token that proves to the Service Bus infrastructure that the client is 
+          authorized to access the queue. The SampleManager creates two queues, one for
+          requests which does not require sessions and one for responses which does
+          require sessions. It then creates four clients and a server. Each client
+          sends messages on the request queue and then waits for a message on the response
+          queue. The server reads a message from the request queue, then sends a message
+          on the response queue.</P>
+      <P>
+          Many application scenarios involve two-way communications in which a sender
+          would like to receive and correlate responses for the messages that it sends.
+          This is supported in Service Bus through the use of the properties SessionId and
+          ReplyToSessionId on a message. Consider a pattern involving several clients that
+          are sending messages and expect responses for these messages to be directed back
+          to them. To enable this pattern, a given client, say client “ABC”, would set
+          ReplyToSessionId=”ABC” on any messages it sends and also use SessionReceiver on
+          a reply topic/subscription or queue to listen for messages where SessionId=ABC.
+          To complete the pattern, any processor of the message would set
+          SessionId=ReplyToSessionId once a message has been processed.
+      </P>
+      <H2 class=heading>Prerequisites</H2>
+      <DIV id=sectionSection0 class=section>
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <P xmlns="">
+            If you haven't already done so, please read the release notes
+            document that explains how to sign up for a Windows Azure 
+            account and how to configure your environment.
+          </P>
+        </content>
+      </DIV>
+      <H2 class=heading>SampleManager</H2>
+      <DIV id=sectionSection1 class="section">
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <p xmlns="">
+              The SampleManager&#39;s flow:</p>
+          <ul>
+              <li>Gets the user credentials and creates a NamespaceManager (namespaceClient). This entity holds the credentials and is used for all 
+              messaging management operations.</li>
+              <li>The namespaceClient is used to create queues 
+              for communication between the clients and server.</li>
+              <li>SampleManager then 
+              creates and starts the clients and server processes, passing the user credentials to each. 
+                  Clients are numbered 0-3, and use those numbers as their response session id.</li>
+              <li>On user input, the SampleManager closes the clients and server, and deletes the 
+                  queues.</li>
+          </ul>
+          <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                  <th </th="" align="leftNote:">
+                      &nbsp;</th>
+              </tr>
+              <tr>
+                  <td>
+                      <b>Note:</b> The static <code>ServiceBusEnvironment.CreateServiceUri </code>
+                      function is provided to help construct the URI with the correct format and 
+                      domain name. It is strongly recommended that you use this function instead of 
+                      building the URI from scratch because the URI construction logic and format 
+                      might change in future releases.</td>
+              </tr>
+          </table>
+        </DIV>
+      <H2 class=heading>Client</H2>
+      <DIV id=sectionSection3 class="section">
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <p xmlns="">
+              The Client&#39;s flow:</p>
+          <ul>
+              <li>Gets user credentials and client # as parameters from SampleManager and creates 
+                  a MessagingFactory (messagingFactory). This entity holds the credentials and is 
+                  used for all messaging runtime operations.</li>
+              <li>Opens QueueClients to the request and response queues, using the 
+                  messagingFactory.</li>
+              <li>Sends messages to the request queue.</li>
+              <li>Receives messages for its associated session (the client # passed in from the 
+                  SampleManager).</li>
+              <li>Closes QueueClients.</li>
+          </ul>
+        </DIV>
+      <H2 class=heading>Server</H2>
+      <DIV id=sectionSection2 class=section>
+        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+          <p xmlns="">
+              The Server&#39;s flow:</p>
+          <ul>
+              <li>Gets user credentials as parameters from SampleManager and creates a 
+                  MessagingFactory (messagingFactory).</li>
+              <li>Opens QueueClients to the request and response queues, using the 
+                  messagingFactory.</li>
+              <li>Receives messages on the request queue.</li>
+              <li>Sends messages on the response queue, setting the session to the client # so 
+                  that the correct client will receive the response.</li>
+              <li>Closes QueueClients.</li>
+          </ul>
+        </content>
+      </DIV>
+    </DIV>
+    <H2 class=heading>Running the Sample</H2>
+    <DIV id=DIV1 class=section>
+      <content
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+        <P xmlns="">
+            To run the sample, build the solution in Visual Studio or from the command line, 
+            then run the resulting SampleManager executable file. The program will 
+            prompt for your Service Bus namespace and the issuer credentials. For the 
+            issuer secret, be sure to use the &quot;Default Issuer Key&quot; value (typically &quot;owner&quot;) 
+            from the Azure portal, rather than one of the management keys.
+        </P>
+        <P xmlns="">
+          <B>Expected Output - SampleManager </B>
+        </P>
+        <DIV class=code xmlns="">
+          <SPAN codeLanguage="other">
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+                <TR>
+                  <TD>
+                    <PRE class="style2">
+                         Please provide the namespace to use:
+                        &lt;service namespace&gt;
+                        Please provide the Issuer name to use:
+                        &lt;issuer name&gt;
+                        Please provide the Issuer key to use:
+                        &lt;issuer key&gt;
+
+                        Creating Queues...
+                        Created RequestQueue, Queue.RequiresSession = false
+                        Created ResponseQueue, Queue.RequiresSession = true
+
+                        Launching clients and servers...
+
+                        Press [Enter] to exit.
+                    </PRE>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </SPAN>
+        </DIV>
+        <P xmlns="">
+          <B>Expected Output - Server</B></P>
+        <DIV class=code xmlns="">
+          <SPAN codeLanguage="other">
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+                <TR>
+                  <TD colSpan=2>
+                    <PRE class="style2">
+                         Ready to receive messages from RequestQueue...
+                        Reading messages from queue RequestQueue
+                        REQUEST: 0 - Client 2.
+                        REQUEST: 0 - Client 0.
+                        REQUEST: 0 - Client 1.
+                        REQUEST: 0 - Client 3.
+                        REQUEST: 1 - Client 2.
+                        REQUEST: 1 - Client 0.
+                        REQUEST: 1 - Client 1.
+                        REQUEST: 1 - Client 3.
+                        REQUEST: 2 - Client 2.
+                        REQUEST: 2 - Client 0.
+                        REQUEST: 2 - Client 1.
+                        REQUEST: 2 - Client 3.
+                        
+                        ...
+
+                        REQUEST: 9 - Client 2.
+                        REQUEST: 9 - Client 0.
+                        REQUEST: 9 - Client 1.
+                        REQUEST: 9 - Client 3.
+
+                        Server complete.
+                    </PRE>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </SPAN>
+        </DIV>
+        <P xmlns="">
+          <B>Expected Output - Client</B></P>
+        <DIV class=code xmlns="">
+          <SPAN codeLanguage="other">
+            <TABLE cellSpacing=0 cellPadding=0 width="100%">
+              <TBODY>
+                <TR>
+                  <TD colSpan=2>
+                    <PRE>
+                         Preparing to send request messages to RequestQueue...
+                        Sending request messages to queue RequestQueue
+                        Receiving response messages on queue ResponseQueue
+                        REQUEST: 0 - Client 0.
+                        RESPONSE: 0 - Client 0.
+                        REQUEST: 1 - Client 0.
+                        RESPONSE: 1 - Client 0.
+                        REQUEST: 2 - Client 0.
+                        RESPONSE: 2 - Client 0.
+                        
+                        ...
+
+                        REQUEST: 9 - Client 0.
+                        RESPONSE: 9 - Client 0.
+
+                        Client complete.
+                    </PRE>
+                  </TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </SPAN>
+        </DIV>
+      </content>
+    </DIV>
+    <!--[if gte IE 5]><tool:tip avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]-->
+  </DIV>
+</BODY></HTML>

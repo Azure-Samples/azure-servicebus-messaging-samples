@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D262A7D3-A52E-43E0-A711-19610A69CBAF}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\USERS\CLEMENSV\APPDATA\LOCAL\MICROSOFT\VISUALSTUDIO\14.0\EXTENSIONS\R0YESXUX.QOS\description.html = ..\..\..\USERS\CLEMENSV\APPDATA\LOCAL\MICROSOFT\VISUALSTUDIO\14.0\EXTENSIONS\R0YESXUX.QOS\description.html
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|amd64 = Debug|amd64
+		Debug|Any CPU = Debug|Any CPU
+		Debug|AnyCPU = Debug|AnyCPU
+		Debug|ia64 = Debug|ia64
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|amd64 = Release|amd64
+		Release|Any CPU = Release|Any CPU
+		Release|AnyCPU = Release|AnyCPU
+		Release|ia64 = Release|ia64
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+		VsMsBuild|amd64 = VsMsBuild|amd64
+		VsMsBuild|Any CPU = VsMsBuild|Any CPU
+		VsMsBuild|AnyCPU = VsMsBuild|AnyCPU
+		VsMsBuild|ia64 = VsMsBuild|ia64
+		VsMsBuild|Mixed Platforms = VsMsBuild|Mixed Platforms
+		VsMsBuild|x64 = VsMsBuild|x64
+		VsMsBuild|x86 = VsMsBuild|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|amd64.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|ia64.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|amd64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|ia64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|x64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.Release|x86.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|amd64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|Any CPU.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|Any CPU.Build.0 = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|AnyCPU.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|ia64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|Mixed Platforms.Build.0 = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|x64.ActiveCfg = Release|Any CPU
+		{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}.VsMsBuild|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,121 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
+"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip" 
+XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 = 
+"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD><TITLE>MSMQ to Service Bus 
+    Bridge Sample</TITLE>
+<META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+<META name=save content=history></META>
+<LINK rel=stylesheet type=text/css 
+href="../../../CommonFiles/Classic.css"></LINK>
+
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+    <style type="text/css">
+        .newStyle1
+        {
+            background-color: #0000FF;
+        }
+    </style>
+</HEAD>
+<BODY>
+<DIV id=header>
+<TABLE id=topTable width="100%">
+  <TBODY>
+  <TR id=headerTableRow1>
+    <TD align=left><SPAN id=runningHeaderText></SPAN></TD></TR>
+  <TR id=headerTableRow2>
+    <TD align=left><SPAN id=nsrTitle>MSMQ to Service Bus Bridge Sample</SPAN></TD></TR>
+  <TR id=headerTableRow3>
+    <TD></TD></TR></TBODY></TABLE>
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<DIV id=allHistory class=saveHistory onload="loadAll()" 
+onsave="saveAll()"></DIV>
+<P>This sample demonstrates communication between MSMQ and the Service Bus 
+    using a bridge.</P>
+    <p>
+        There are 3 executables in this sample. The intention of the sample is to 
+        showcase a simple implementation of MSMQ-to-ServiceBus bridge using the Bridge 
+        project. The MsmqTestClient and ServiceBusTestClient projects are client 
+        projects used for testing the bridge.</p>
+    <p>
+        The functionalities of the executables are:</p>
+    <ul>
+        <li>The MsmqTestClient program acts as a setup utility as well as an MSMQ test 
+                    client. It creates all the queues (both MSMQ and Service Bus), 
+                    and sends/receives messages from MSMQ queues using System.Messaging APIs. When all 
+                    the messages are sent and received, the program deletes the queues.</li>
+        <li>The ServiceBusTestClient program sends/receives messages from Service Bus queues using 
+                    Service Bus APIs.</li>
+        <li>The Bridge program is the MSMQ-ServiceBus bridge that can send messages from 
+                    an MSMQ queue to a Service Bus queue and vice-versa. The bridge in this sample is a 
+                    simple implementation that is tied to a fixed MsmqQueue and a Service Bus 
+            queue. 
+                    It can be made generic in nature by enumerating queues in MSMQ and Service Bus 
+                    to achieve an&nbsp;automatic bridging capability. However, it is not the intention of 
+                    this sample to showcase an all-purpose bridge between MSMQ and Service Bus.</li>
+    </ul>
+    <p>
+        The sequence of steps performed by the sample are as below:</p>
+    <ul>
+        <li>The MsmqTestClient program creates all the necessary queues (MSMQ queues - 
+            MsmqSendQueue/MsmqReceiveQueue, Service Bus queues - 
+            ServiceBusSendQueue/ServiceBusReceiveQueue)</li>
+        <li>The MsmqTestClient program sends a Message to a MSMQ queue (MsmqSendQueue)</li>
+        <li>The Bridge reads this MSMQ message from the MSMQ queue (MsmqSendQueue), converts 
+            the message a into BrokeredMessage and sends 
+            it to a Service Bus queue (ServiceBusSendQueue)</li>
+        <li>The ServiceBusTestClient program receives the BrokeredMessage from the Service Bus 
+            queue (ServiceBusSendQueue) and sends the BrokeredMessage back through another ServiceBus 
+            queue (ServiceBusReceiveQueue)</li>
+        <li>The Bridge receives the BrokeredMessage from this Service Bus queue (ServiceBusReceiveQueue) 
+            and sends an MSMQ message to another MSMQ queue (MsmqReceiveQueue)</li>
+        <li>The MsmqTestClient program receives the MSMQ message from the second MSMQ queue (MsmqReceiveQueue) </li>
+        <li>The MsmqTestClient program deletes all the queues</li>
+    </ul>
+
+<TABLE cellSpacing=0 cellPadding=0 width="100%">
+  <TBODY>
+  <TR>
+    <TH align=leftNote: </TH>&nbsp;</TR>
+  <TR>
+    <TD><b>Note:</b> The sample demonstrates simple communication between MSMQ and 
+        Service Bus. It does not deal with acknowledgements for the messages being sent.</TD></TR></TBODY></TABLE>
+    &nbsp;<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+<P xmlns="">If you haven&#39;t already done so, please read the release notes document 
+    that explains how to sign up for a Windows Azure account and how to 
+    configure your environment.</P>
+    <P xmlns="">To install MSQM, please refer to <a href="http://msdn.microsoft.com/en-us/library/aa967729.aspx">
+        Installing Message Queuing (MSMQ)</a>.</P>
+</content></DIV>
+<H2 class=heading>Running the Sample</H2>
+<DIV id=DIV1 class=section><content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+    <P xmlns="">After building the solution, run the executables in the following order.</P>
+<OL class=ordered xmlns="">
+  <LI>MsmqTestClient.exe<LI>Bridge.exe<LI>ServiceBusTestClient.exe</OL>
+    <p>
+        Each will prompt for 
+        a Service Bus service namespace, issuer name (e.g. &quot;owner&quot;), 
+        and issuer key.</p>
+<P xmlns="">When finished, the MsmqTestClient will prompt to press ENTER to clean up 
+    queues and exit the application.</P>
+    </content>
+    <content 
+xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+</content>
+</DIV>
+<br /> 
+<hr /> 
+Did you find this information useful?
+<a href="http://go.microsoft.com/fwlink/?LinkID=155664">
+      
+    <linkText>
+    Please send your suggestions and comments about the documentation.
+    </linkText>
+</a>
+</BODY></HTML>
