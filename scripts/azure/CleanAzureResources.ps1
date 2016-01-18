@@ -54,7 +54,7 @@ $ErrorActionPreference = "Continue"
 $success = $true
 
 Write-InfoLog "Deleting ServiceBus" (Get-ScriptName) (Get-ScriptLineNumber)
-& "$scriptDir\ServiceBus\DeleteServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
+& "$scriptDir\ServiceBus\DeleteServiceBusResources.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"]
 $success = $success -and $?
 
 if($success)

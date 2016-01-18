@@ -84,37 +84,27 @@ $NamespaceManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectio
 Write-InfoLog "NamespaceManager object for the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
 
 
-$RelayTypeMap = @{
-   "NetTcp" =  [Microsoft.ServiceBus.RelayType]::NetTcp;
-   "NetEvent" =  [Microsoft.ServiceBus.RelayType]::NetEvent;
-   "Http" =  [Microsoft.ServiceBus.RelayType]::Http;
-   "None" =  [Microsoft.ServiceBus.RelayType]::None
-}
+$scriptCreateQueue = {
+    param($queuePath)
 
-
-
-$scriptCreateRelayOfType = {
-    param($path,$subPath,$relayType)
-
-    $RelayDescription = $null
+    $QueueDescription = $null
     
-    $relayPath = Join-Path $path $subPath 
-    if ($NamespaceManager.RelayExistsAsync($relayPath).GetAwaiter().GetResult())
+    if ($NamespaceManager.QueueExists($queuePath))
     {
-        Write-InfoLog "The relay: $relayPath already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
-        $RelayDescription = $NamespaceManager.GetRelayAsync($relayPath).GetAwaiter().GetResult()
-        if ( $RelayDescription.RelayType -ne $relayType )
+        Write-InfoLog "The queue: $queuePath already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
+        $QueueDescription = $NamespaceManager.GetQueue($queuePath)
+        if ( $QueueDescription.QueueType -ne $queueType )
         {
-            throw "Unexpected type $RelayDescription.RelayType for existing relay $relayPath"
+            throw "Unexpected type $QueueDescription.QueueType for existing queue $queuePath"
         }
     }
     else
     {
-        Write-InfoLog "Creating the relay: $relayPath of type $relayType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
-        $RelayDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.RelayDescription -ArgumentList $relayPath, $relayType
-        $RelayDescription = $NamespaceManager.CreateRelayAsync($RelayDescription).GetAwaiter().GetResult();
-        Write-InfoLog "The relay: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
-        $RelayDescription = $NamespaceManager.GetRelayAsync($relayPath).GetAwaiter().GetResult()
+        Write-InfoLog "Creating the queue: $queuePath of type $queueType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        $QueueDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.QueueDescription -ArgumentList $queuePath
+        $QueueDescription = $NamespaceManager.CreateQueue($QueueDescription)
+        Write-InfoLog "The queue: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
+        $QueueDescription = $NamespaceManager.GetQueue($queuePath)
     }
     
     $Rule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
@@ -122,38 +112,98 @@ $scriptCreateRelayOfType = {
     $ListenRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights
     $ManageRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights
     
-    if ( $RelayDescription.Authorization.TryGetSharedAccessAuthorizationRule($SendRuleName, [ref]$Rule))
+    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($SendRuleName, [ref]$Rule))
     {
         $Rule.PrimaryKey = $SendKey
     }
     else
     {
-        $RelayDescription.Authorization.Add($SendRule)
+        $QueueDescription.Authorization.Add($SendRule)
     }
     
-    if ( $RelayDescription.Authorization.TryGetSharedAccessAuthorizationRule($ListenRuleName, [ref]$Rule))
+    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($ListenRuleName, [ref]$Rule))
     {
         $Rule.PrimaryKey = $ListenKey
     }
     else
     {
-        $RelayDescription.Authorization.Add($ListenRule)
+        $QueueDescription.Authorization.Add($ListenRule)
     }
     
-    if ( $RelayDescription.Authorization.TryGetSharedAccessAuthorizationRule($ManageRuleName, [ref]$Rule))
+    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($ManageRuleName, [ref]$Rule))
     {
         $Rule.PrimaryKey = $ManageKey
     }
     else
     {
-        $RelayDescription.Authorization.Add($ManageRule)
+        $QueueDescription.Authorization.Add($ManageRule)
     }
     
-    $RelayDescription = $NamespaceManager.UpdateRelayAsync($RelayDescription).GetAwaiter().GetResult();
+    $QueueDescription = $NamespaceManager.UpdateQueueAsync($QueueDescription).GetAwaiter().GetResult();
 }
 
-& Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "nettcp", $RelayTypeMap."NetTcp"
-& Invoke-Command $scriptCreateRelayOfType -ArgumentList $Path, "http", $RelayTypeMap."Http"
+$scriptCreateTopic = {
+    param($topicPath)
+
+    $TopicDescription = $null
+    $SubDescription = $null
+    
+    if ($NamespaceManager.TopicExistsAsync($topicPath).GetAwaiter().GetResult())
+    {
+        Write-InfoLog "The topic: $topicPath already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
+        $TopicDescription = $NamespaceManager.GetTopicAsync($topicPath).GetAwaiter().GetResult()
+        if ( $TopicDescription.TopicType -ne $topicType )
+        {
+            throw "Unexpected type $TopicDescription.TopicType for existing topic $topicPath"
+        }
+    }
+    else
+    {
+        Write-InfoLog "Creating the topic: $topicPath of type $topicType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        $TopicDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.TopicDescription -ArgumentList $topicPath
+        $TopicDescription = $NamespaceManager.CreateTopic($TopicDescription)
+        $SubDescription = $NamespaceManager.CreateSubscription($topicPath, "default")
+        Write-InfoLog "The topic: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
+        $TopicDescription = $NamespaceManager.GetTopic($topicPath)
+    }
+    
+    $Rule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
+    $SendRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
+    $ListenRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights
+    $ManageRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights
+    
+    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($SendRuleName, [ref]$Rule))
+    {
+        $Rule.PrimaryKey = $SendKey
+    }
+    else
+    {
+        $TopicDescription.Authorization.Add($SendRule)
+    }
+    
+    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($ListenRuleName, [ref]$Rule))
+    {
+        $Rule.PrimaryKey = $ListenKey
+    }
+    else
+    {
+        $TopicDescription.Authorization.Add($ListenRule)
+    }
+    
+    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($ManageRuleName, [ref]$Rule))
+    {
+        $Rule.PrimaryKey = $ManageKey
+    }
+    else
+    {
+        $TopicDescription.Authorization.Add($ManageRule)
+    }
+    
+    $TopicDescription = $NamespaceManager.UpdateTopicAsync($TopicDescription).GetAwaiter().GetResult();
+}
+
+& Invoke-Command $scriptCreateQueue -ArgumentList "queue"
+& Invoke-Command $scriptCreateTopic -ArgumentList "topic"
 
 $finishTime = Get-Date
 $totalSeconds = ($finishTime - $startTime).TotalSeconds

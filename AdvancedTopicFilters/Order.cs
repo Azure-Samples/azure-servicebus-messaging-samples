@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //----------------------------------------------------------------
 
-namespace Microsoft.Samples.AdvancedFiltersSample
+namespace MessagingSamples
 {
     class Order
     {

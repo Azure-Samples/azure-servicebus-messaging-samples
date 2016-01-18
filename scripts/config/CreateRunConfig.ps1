@@ -30,7 +30,7 @@ if(-not $?)
 Write-SpecialLog "Step 0: Creating Run Configuration" (Get-ScriptName) (Get-ScriptLineNumber)
 
 $config = @{
-    SERVICEBUS_NAMESPACE = "relaySample" + [System.DateTime]::Now.ToString("yyMMddHHmmss");
+    SERVICEBUS_NAMESPACE = "msgSample" + [System.DateTime]::Now.ToString("yyMMddHHmmss");
     AZURE_LOCATION="North Europe";
 }
 

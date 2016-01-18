@@ -104,7 +104,7 @@ Write-SpecialLog "Creating ServiceBus Relay" (Get-ScriptName) (Get-ScriptLineNum
 Select-AzureSubscription -SubscriptionName $subName
 & "$scriptDir\..\init.ps1"
 Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
-$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusRelay.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
+$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusResources.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
 if($sbKeys)
 {
     & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys["samplesend"]}

@@ -59,7 +59,7 @@ function Clean-ExampleFolder($cleanupDir)
 #$ErrorActionPreference = "SilentlyContinue"
 
 $ExampleDir = $ExampleDir.Replace("""","")
-$runConfigurationFile = Join-Path $env:userprofile "azure-relay-config.properties" 
+$runConfigurationFile = Join-Path $env:userprofile "azure-msg-config.properties" 
 
 Write-InfoLog "Checking for a run configuration file. Path: $runConfigurationFile" (Get-ScriptName) (Get-ScriptLineNumber)
 if(Test-Path $runConfigurationFile)

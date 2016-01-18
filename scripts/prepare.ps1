@@ -17,7 +17,7 @@ if(-not $?)
 ###########################################################
 
 #Create Run Configuration
-$configFile = Join-Path $env:userprofile "azure-relay-config.properties" 
+$configFile = Join-Path $env:userprofile "azure-msg-config.properties" 
 
 & "$scriptDir\..\scripts\config\CreateRunConfig.ps1" $configFile
 if(-not $?)
