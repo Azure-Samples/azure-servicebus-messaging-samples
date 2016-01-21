@@ -8,7 +8,7 @@
     <ProjectGuid>{C0705BFD-2855-4753-83FA-0CB17C3AE5E6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.ServiceBus.Samples.MsmqServiceBusBridge</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>ServiceBusTestClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

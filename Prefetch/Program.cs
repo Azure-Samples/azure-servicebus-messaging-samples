@@ -1,49 +1,67 @@
-﻿//----------------------------------------------------------------
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//----------------------------------------------------------------
-using System;
-using System.Diagnostics;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
+﻿//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
+// 
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
-namespace Microsoft.Samples.MessagesPrefetchSample
+namespace MessagingSamples
 {
-    class Program
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
+    using Microsoft.ServiceBus.Messaging;
+    using Microsoft.ServiceBus.Messaging.Amqp;
+
+    /// <summary>
+    ///     This sample demonstrates how to use the messages prefetch feature upon receive
+    ///     The sample creates a Queue, sends messages to it and receives all messages
+    ///     using 2 receivers one with prefetchCount = 0 (disabled) and the other with
+    ///     prefecthCount = 100. For each case, it calculates the time taken to receive and complete
+    ///     all messages and at the end, it prints the difference between both times.
+    /// </summary>
+    class Program : IBasicQueueSendReceiveSample
     {
-        #region Fields
-        static string serviceBusConnectionString;
-
-        const string QueueName = "MyQueue";
-        #endregion
-
-        static void Main(string[] args)
+        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
         {
-            // ***************************************************************************************
-            // This sample demonstrates how to use the messages prefetch feature upon receive
-            // The sample creates a Queue, sends messages to it and receives all messages
-            // using 2 receivers one with prefetchCount = 0 (disabled) and the other with 
-            // prefetCount = 100. For each case, it calculates the time taken to receive and complete
-            // all messages and at the end, it prints the difference between both times.
-            // ***************************************************************************************
+            // Create communication objects to send and receive on the queue
+            var senderMessagingFactory = 
+                await MessagingFactory.CreateAsync(namespaceAddress, new MessagingFactorySettings {
+                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken),
+                    TransportType = TransportType.Amqp,
+                    });
+            var sender = await senderMessagingFactory.CreateMessageSenderAsync(queueName);
 
-            // Get ServiceBus namespace and credentials from the user.
-            Program.GetNamespaceAndCredentials();
+            var receiverMessagingFactory =
+                await MessagingFactory.CreateAsync(namespaceAddress, new MessagingFactorySettings
+                {
+                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken),
+                    TransportType = TransportType.Amqp,
+                });
 
-            // Create mesasging factory and ServiceBus namespace manager.
-            MessagingFactory messagingFactory = Program.CreateMessagingFactory();
-            NamespaceManager namespaceManager = Program.CreateNamespaceManager();
-
-            // Create queue that will be used through the sample.
-            Program.CreateQueue(namespaceManager);
+            var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
             // Send and Receive messages with prefetch OFF
-            long timeTaken1 = Program.SendAndReceiveMessages(messagingFactory, 0);
+            var timeTaken1 = await this.SendAndReceiveMessages(sender, receiver, 100, 0);
 
             // Send and Receive messages with prefetch ON
-            long timeTaken2 = Program.SendAndReceiveMessages(messagingFactory, 100);
+            var timeTaken2 = await this.SendAndReceiveMessages(sender, receiver, 100, 10);
 
             // Calculate the time difference
-            long timeDifference = timeTaken1 - timeTaken2;
+            var timeDifference = timeTaken1 - timeTaken2;
 
             Console.WriteLine("\nTime difference = {0} milliseconds", timeDifference);
 
@@ -52,103 +70,64 @@ namespace Microsoft.Samples.MessagesPrefetchSample
             Console.ReadLine();
 
             // Cleanup:
-            messagingFactory.Close();
-            namespaceManager.DeleteQueue(Program.QueueName);
+            senderMessagingFactory.Close();
+            receiverMessagingFactory.Close();
         }
 
-
-        static long SendAndReceiveMessages(MessagingFactory messagingFactory, int prefetchCount)
+        async Task<long> SendAndReceiveMessages(MessageSender sender, MessageReceiver receiver, int messageCount, int prefetchCount)
         {
-            // Create client for the queue.
-            QueueClient queueClient = messagingFactory.CreateQueueClient(Program.QueueName, ReceiveMode.PeekLock);
-
             // Now we can start sending messages.
-            int messageCount = 1000;
+            var rnd = new Random();
+            var mockPayload = new byte[100]; // 100 random-byte payload 
+
+            rnd.NextBytes(mockPayload);
 
             Console.WriteLine("\nSending {0} messages to the queue", messageCount);
-
-            for (int i = 0; i < messageCount; i++)
+            var sendOps = new List<Task>();
+            for (var i = 0; i < messageCount; i++)
             {
-                queueClient.Send(new BrokeredMessage());
+                sendOps.Add(
+                    sender.SendAsync(
+                        new BrokeredMessage(new MemoryStream(mockPayload))
+                        {
+                            TimeToLive = TimeSpan.FromMinutes(5)
+                        }));
+
             }
+            Task.WaitAll(sendOps.ToArray());
 
             Console.WriteLine("Send completed");
 
-            // Set the prefetchCount on the queueClient
-            queueClient.PrefetchCount = prefetchCount;
-
-            // Start stopwatch
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            // Set the prefetchCount on the receiver
+            receiver.PrefetchCount = prefetchCount;
 
             // Receive the messages
             Console.WriteLine("Receiving messages from queue using prefetchCount = {0}", prefetchCount);
 
-            BrokeredMessage receivedMessage = queueClient.Receive(TimeSpan.FromSeconds(10));
+            // Start stopwatch
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
 
+            var receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(10));
             while (receivedMessage != null)
             {
-                receivedMessage.Complete();
-                receivedMessage = queueClient.Receive(TimeSpan.FromSeconds(10));
+                // here's where you'd do any work
+
+                // complete (roundtrips)
+                await receivedMessage.CompleteAsync();
+                
+                // now get the next message
+                receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(10));
             }
-
-            Console.WriteLine("Receive completed");
-
             // Stop the stopwatch
             stopWatch.Stop();
 
-            long timeTaken = stopWatch.ElapsedMilliseconds;
+            Console.WriteLine("Receive completed");
+
+            var timeTaken = stopWatch.ElapsedMilliseconds - 10000; // discount the 10s wait on the empty queue
             Console.WriteLine("Time to receive and complete all messages = {0} milliseconds", timeTaken);
 
-            // Close the QueueClient
-            queueClient.Close();
-
             return timeTaken;
-        }
-
-        static void CreateQueue(NamespaceManager namespaceManager)
-        {
-            Console.WriteLine("\nCreating a queue.");
-            
-            // Create a queue.
-            if(namespaceManager.QueueExists(Program.QueueName))
-            {
-                namespaceManager.DeleteQueue(Program.QueueName);
-            }
-
-            QueueDescription description = new QueueDescription(Program.QueueName);
-            description.LockDuration = TimeSpan.FromMinutes(3);
-
-            QueueDescription queueDescription = namespaceManager.CreateQueue(description);
-
-            Console.WriteLine("Queue created.");
-        }
-
-        static NamespaceManager CreateNamespaceManager()
-        {
-            return NamespaceManager.CreateFromConnectionString(serviceBusConnectionString);
-        }
-
-        static MessagingFactory CreateMessagingFactory()
-        {
-            return MessagingFactory.CreateFromConnectionString(serviceBusConnectionString);
-        }
-
-
-        static void GetNamespaceAndCredentials()
-        {
-            Console.Write("Please provide a connection string to Service Bus (/? for help):\n ");
-            Program.serviceBusConnectionString = Console.ReadLine();
-
-            if ((String.Compare(Program.serviceBusConnectionString, "/?") == 0) || (Program.serviceBusConnectionString.Length == 0))
-            {
-                Console.Write("To connect to the Service Bus cloud service, go to the Windows Azure portal and select 'View Connection String'.\n");
-                Console.Write("To connect to the Service Bus for Windows Server, use the get-sbClientConfiguration PowerShell cmdlet.\n\n");
-                Console.Write("A Service Bus connection string has the following format: \nEndpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<keyName>;SharedAccessKey=<key>");
-
-                Program.serviceBusConnectionString = Console.ReadLine();
-                Environment.Exit(0);
-            }
         }
     }
 }

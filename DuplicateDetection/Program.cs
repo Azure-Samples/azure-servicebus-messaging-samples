@@ -1,132 +1,84 @@
-﻿//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure AppFabric SDK
-// Software Development Kit
+﻿//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
-using Microsoft.ServiceBus.Description;
-
-namespace Microsoft.Samples.DuplicateDetection
+namespace MessagingSamples
 {
-    class Program
+    using System;
+    using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
+    using Microsoft.ServiceBus.Messaging;
+
+    class Program : IDupdetectQueueSendReceiveSample
     {
-        static string serviceBusConnectionString;
-
-        static void Main()
+        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
         {
-            string queueNameDupDection = "RemoveDuplicatesQueue";
-            string queueNameNoDupDection = "DefaultQueue";
+            // Create communication objects to send and receive on the queue
+            var senderMessagingFactory =
+                await MessagingFactory.CreateAsync(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken));
+            var sender = await senderMessagingFactory.CreateMessageSenderAsync(queueName);
 
- 
-            GetUserCredentials();
-
-            // Get ServiceBusNamespaceClient for management operations
-            NamespaceManager namespaceManager = NamespaceManager.CreateFromConnectionString(serviceBusConnectionString);
-            
-            // 1. Create a queue without duplicate detection enabled
-            Console.WriteLine("\nCreating {0} ...", queueNameNoDupDection);
-            if (namespaceManager.QueueExists(queueNameNoDupDection))
-            {
-                namespaceManager.DeleteQueue(queueNameNoDupDection);
-            }
-            namespaceManager.CreateQueue(queueNameNoDupDection);
-            Console.WriteLine("Created {0}", queueNameNoDupDection);
-
-            // Get messageFactory for runtime operation
-            MessagingFactory messagingFactory = MessagingFactory.CreateFromConnectionString(serviceBusConnectionString);
-
-            SendReceive(messagingFactory, queueNameNoDupDection);
-
-            // 2. Create a queue with duplicate detection enabled
-            Console.WriteLine("\nCreating {0} ...", queueNameDupDection);
-            if (namespaceManager.QueueExists(queueNameDupDection))
-            {
-                namespaceManager.DeleteQueue(queueNameDupDection);
-            }
-            namespaceManager.CreateQueue(new QueueDescription(queueNameDupDection) { RequiresDuplicateDetection = true });
-            Console.WriteLine("Created {0}", queueNameDupDection);
-            SendReceive(messagingFactory, queueNameDupDection);
-
-            Console.WriteLine("\nPress [Enter] to exit.");
-            Console.ReadLine();
-
-            // Cleanup:
-            namespaceManager.DeleteQueue(queueNameDupDection);
-            namespaceManager.DeleteQueue(queueNameNoDupDection);
-        }
-
-
-        static void SendReceive(MessagingFactory messagingFactory, string queueName)
-        {
-            QueueClient queueClient = messagingFactory.CreateQueueClient(queueName);
+            var receiverMessagingFactory =
+                await MessagingFactory.CreateAsync(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken));
+            var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
             // Send messages to queue
             Console.WriteLine("\tSending messages to {0} ...", queueName);
-            BrokeredMessage message = new BrokeredMessage();
-            message.MessageId = "ABC123";
-            queueClient.Send(message);
+            var message = new BrokeredMessage
+            {
+                MessageId = "ABC123",
+                TimeToLive = TimeSpan.FromMinutes(1)
+            };
+            await sender.SendAsync(message);
             Console.WriteLine("\t=> Sent a message with messageId {0}", message.MessageId);
 
-            BrokeredMessage message2 = new BrokeredMessage();
-            message2.MessageId = "ABC123";
-            queueClient.Send(message2);
+            var message2 = new BrokeredMessage
+            {
+                MessageId = "ABC123",
+                TimeToLive = TimeSpan.FromMinutes(1)
+            };
+            await sender.SendAsync(message2);
             Console.WriteLine("\t=> Sent a duplicate message with messageId {0}", message.MessageId);
 
             // Receive messages from queue
-            string receivedMessageId = "";
+            var receivedMessageId = "";
 
             Console.WriteLine("\n\tWaiting for messages from {0} ...", queueName);
             while (true)
             {
-                BrokeredMessage receivedMessage = queueClient.Receive(TimeSpan.FromSeconds(10));
+                var receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(10));
 
                 if (receivedMessage == null)
                 {
                     break;
                 }
-                else
+                Console.WriteLine("\t<= Received a message with messageId {0}", receivedMessage.MessageId);
+                await receivedMessage.CompleteAsync();
+                if (receivedMessageId.Equals(receivedMessage.MessageId, StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("\t<= Received a message with messageId {0}", receivedMessage.MessageId);
-                    receivedMessage.Complete();
-                    if (receivedMessageId.Equals(receivedMessage.MessageId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine("\t\tRECEIVED a DUPLICATE MESSAGE");
-                    }
-
-                    receivedMessageId = receivedMessage.MessageId;
+                    Console.WriteLine("\t\tRECEIVED a DUPLICATE MESSAGE");
                 }
+
+                receivedMessageId = receivedMessage.MessageId;
             }
 
             Console.WriteLine("\tDone receiving messages from {0}", queueName);
 
-            queueClient.Close();
-        }
-
-        static void GetUserCredentials()
-        {
-            Console.Write("Please provide a connection string to Service Bus (/? for help):\n ");
-            serviceBusConnectionString = Console.ReadLine();
-
-            if ((String.Compare(serviceBusConnectionString, "/?") == 0) || (serviceBusConnectionString.Length == 0))
-            {
-                Console.Write("To connect to the Service Bus cloud service, go to the Windows Azure portal and select 'View Connection String'.\n");
-                Console.Write("To connect to the Service Bus for Windows Server, use the get-sbClientConfiguration PowerShell cmdlet.\n\n");
-                Console.Write("A Service Bus connection string has the following format: \nEndpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<keyName>;SharedAccessKey=<key>");
-
-                serviceBusConnectionString = Console.ReadLine();
-                Environment.Exit(0);
-            }
+            await receiver.CloseAsync();
+            await sender.CloseAsync();
         }
     }
 }

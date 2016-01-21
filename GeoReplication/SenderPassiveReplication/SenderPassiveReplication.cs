@@ -14,7 +14,7 @@
 // limitations under the License.
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.Samples.BrokeredMessagingGeoReplication
+namespace MessagingSamples
 {
     using System;
     using System.Collections.Generic;
@@ -46,21 +46,21 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
                 secondaryManagementObjects.CreateQueue(QueueName);
 
                 // Create a primary and secondary queue client.
-                QueueClient primaryQueueClient = primaryFactory.CreateQueueClient(QueueName);
-                QueueClient secondaryQueueClient = secondaryFactory.CreateQueueClient(QueueName);
+                var primaryQueueClient = primaryFactory.CreateQueueClient(QueueName);
+                var secondaryQueueClient = secondaryFactory.CreateQueueClient(QueueName);
 
                 //*****************************************************************************************************
                 //                                   Sending messages
                 //*****************************************************************************************************
                 Console.WriteLine("\nSending messages to primary or secondary queue...\n");
 
-                for (int i = 1; i <= 8; i++)
+                for (var i = 1; i <= 8; i++)
                 {
                     // Create brokered message.
-                    BrokeredMessage m1 = Helper.CreateSampleMessage(i);
+                    var m1 = Helper.CreateSampleMessage(i);
 
                     // Send message to primary or secondary queue.
-                    BrokeredMessage m2 = m1.Clone();
+                    var m2 = m1.Clone();
                     try
                     {
                         if (primaryIsActive == true)
@@ -108,7 +108,7 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
         // If the send operation to the backup queue succeeds, make the backup queue the new active queue.
         static void SendMessage(QueueClient activeQueueClient, QueueClient backupQueueClient, BrokeredMessage m1, BrokeredMessage m2, string activeReplica, string backupReplica)
         {
-            List<Type> serverFailureExceptions = new List<Type>();
+            var serverFailureExceptions = new List<Type>();
             serverFailureExceptions.Add(typeof(MessagingEntityNotFoundException));
             serverFailureExceptions.Add(typeof(UnauthorizedAccessException));
             serverFailureExceptions.Add(typeof(ServerBusyException));
@@ -125,8 +125,8 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
             }
             catch (Exception activeQueueException)
             {
-                bool serverFailure = false;
-                foreach (Type t in serverFailureExceptions)
+                var serverFailure = false;
+                foreach (var t in serverFailureExceptions)
                 {
                     if (activeQueueException.GetType() == t)
                     {

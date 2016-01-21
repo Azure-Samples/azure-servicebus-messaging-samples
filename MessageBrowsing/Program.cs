@@ -1,94 +1,69 @@
-﻿    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Microsoft.ServiceBus.Messaging;
-    using System.IO;
-    using System.ServiceModel.Channels;
-
-namespace BrowseMessages
+﻿namespace MessagingSamples
 {
-        class Program
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
+    using Microsoft.ServiceBus.Messaging;
+
+    class Program : IBasicQueueSendReceiveSample
+    {
+
+        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
         {
-            #region Fields
-            static string ServiceBusConnectionString;
-            static string ServiceBusentityPath;
-            #endregion
+            // ***************************************************************************************
+            // This sample demonstrates how to use MessagePeek feature to look into the content of 
+            // Service bus entities (Queues , Subscriptions).
+            // ***************************************************************************************
 
-            static void Main(string[] args)
+            var senderMessagingFactory = await MessagingFactory.CreateAsync(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken));
+            var sender = await senderMessagingFactory.CreateMessageSenderAsync(queueName);
+
+            var receiverMessagingFactory = await MessagingFactory.CreateAsync(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken));
+            var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
+
+
+            await sender.SendAsync(new BrokeredMessage("Test1") { TimeToLive = TimeSpan.FromMinutes(1)});
+            await sender.SendAsync(new BrokeredMessage("Test2") { TimeToLive = TimeSpan.FromMinutes(1) });
+            await sender.SendAsync(new BrokeredMessage("Test3") { TimeToLive = TimeSpan.FromMinutes(1) });
+
+            while (true)
             {
-                // ***************************************************************************************
-                // This sample demonstrates how to use MessagePeek feature to look into the content of 
-                // Service bus entities (Queues , Subscriptions).
-                // ***************************************************************************************
-                Program.GetNamespaceAndCredentials();
-
-                MessagingFactory messagingFactory = MessagingFactory.CreateFromConnectionString(ServiceBusConnectionString);
-                MessageReceiver messageReciever = messagingFactory.CreateMessageReceiver(Program.ServiceBusentityPath);
-
-                BrokeredMessage msg;
-                while (true)
+                BrokeredMessage msg = await receiver.PeekAsync();
+                if (msg != null)
                 {
-                    msg = messageReciever.Peek();
-                    if (msg != null)
+                    Console.WriteLine("{0} {1} - {2} - {3}", msg.EnqueuedTimeUtc.ToLocalTime().ToShortDateString(), 
+                                                             msg.EnqueuedTimeUtc.ToLocalTime().ToLongTimeString(), 
+                                                             msg.SequenceNumber, msg.Label);
+                    var listViewItems = msg.Properties.Select(p => new[] { p.Key, p.Value.ToString() }).ToArray();
+                    for (int propIndex = 0; propIndex < listViewItems.Length; propIndex++)
                     {
-                        Console.WriteLine("{0} {1} - {2} - {3}", msg.EnqueuedTimeUtc.ToLocalTime().ToShortDateString(), msg.EnqueuedTimeUtc.ToLocalTime().ToLongTimeString(), msg.SequenceNumber, msg.Label);
-                        var listViewItems = msg.Properties.Select(p => new[] { p.Key, p.Value.ToString() }).ToArray();
-                        for (int propIndex = 0; propIndex < listViewItems.Length; propIndex++)
-                        {
-                            Console.Write("{0}: {1}\t", listViewItems[propIndex][0], listViewItems[propIndex][1]);
-                        }
+                        Console.Write("{0}: {1}\t", listViewItems[propIndex][0], listViewItems[propIndex][1]);
+                    }
 
-                        Stream stream = msg.GetBody<Stream>();
-                        if (stream != null)
+                    Stream stream = msg.GetBody<Stream>();
+                    if (stream != null)
+                    {
+                        StreamReader reader = new StreamReader(stream);
+                        string text = reader.ReadToEnd();
+                        if (text != null)
                         {
-                            StreamReader reader = new StreamReader(stream);
-                            string text = reader.ReadToEnd();
-                            if (text != null)
-                            {
-                                Console.WriteLine("\n{0}\n", text);
-                            }
+                            Console.WriteLine("\n{0}\n", text);
                         }
                     }
-                    else
-                    {
-                        break;
-                    }
                 }
-
-                messagingFactory.Close();
-                Console.WriteLine("Press [Enter] to quit...");
-                Console.ReadLine();
+                else
+                {
+                    break;
+                }
             }
 
-
-            static void GetNamespaceAndCredentials()
-            {
-                Console.Write("Please provide a connection string to Service Bus (/? for help):\n ");
-                Program.ServiceBusConnectionString = Console.ReadLine();
-
-                if ((String.Compare(Program.ServiceBusConnectionString, "/?") == 0) || (Program.ServiceBusConnectionString.Length == 0))
-                {
-                    Console.Write("To connect to the Service Bus cloud service, go to the Windows Azure portal and select 'View Connection String'.\n");
-                    Console.Write("To connect to the Service Bus for Windows Server, use the get-sbClientConfiguration PowerShell cmdlet.\n\n");
-                    Console.Write("A Service Bus connection string has the following format: \nEndpoint=sb://<namespace>.servicebus.windows.net/;SharedSecretIssuer=<issuer>;SharedSecretValue=<secret>\n");
-
-                    Program.ServiceBusConnectionString = Console.ReadLine();
-                    Environment.Exit(0);
-                }
-
-                Console.Write("Please provide an entity path to peek messages from (/? for help):\n ");
-                Program.ServiceBusentityPath = Console.ReadLine();
-
-                if ((String.Compare(Program.ServiceBusentityPath, "/?") == 0) || (Program.ServiceBusentityPath.Length == 0))
-                {
-                    Console.Write("Entity path include the relative path of you Service Bus entity.\n");
-                    Console.Write("Examples: MyQueue; MyTopic/subscriptions/MySubscription .\n\n");
-
-                    Program.ServiceBusentityPath = Console.ReadLine();
-                    Environment.Exit(0);
-                }
-            }
+            senderMessagingFactory.Close();
+            receiverMessagingFactory.Close();
+            Console.WriteLine("Press [Enter] to quit...");
+            Console.ReadLine();
         }
+
     }
+}

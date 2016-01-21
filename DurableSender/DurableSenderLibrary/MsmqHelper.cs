@@ -1,17 +1,22 @@
-﻿//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure Platform AppFabric SDK
-// Software Development Kit
+﻿//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
-namespace Microsoft.ServiceBus.Samples.DurableSender
+namespace MessagingSamples
 {
-    using System;
     using System.Messaging;
     using Microsoft.ServiceBus.Messaging;
 
@@ -21,39 +26,40 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
         // If it exists, open existing queue. Return the queue handle.
         public static MessageQueue GetMsmqQueue(string queueName)
         {
-            MessageQueue msmqQueue = new MessageQueue(queueName, true);
+            var msmqQueue = new MessageQueue(queueName, true);
             if (!MessageQueue.Exists(queueName))
             {
                 MessageQueue.Create(queueName, true);
-                Console.WriteLine("Created MSMQ queue " + queueName);
             }
             else
             {
                 msmqQueue.Refresh();
             }
             msmqQueue.MessageReadPropertyFilter.SetAll();
-            msmqQueue.Formatter = new XmlMessageFormatter(new Type[] { typeof(BrokeredMessage) });
+            msmqQueue.Formatter = new XmlMessageFormatter(new[] {typeof (BrokeredMessage)});
             return msmqQueue;
         }
 
         // Create an MSMQ queue.
-        public static string CreateMsmqQueueName(string sbusQueueName, string suffix)
+        public static string CreateMsmqQueueName(string ServiceBusQueueName, string suffix)
         {
-            return (".\\private$\\" + sbusQueueName.Replace("/", "_") + "_" + suffix);
+            return (".\\private$\\" + ServiceBusQueueName.Replace("/", "_") + "_" + suffix);
         }
 
         // Pack a single brokered message into an MSMQ message.
-        public static Message PackSbusMessageIntoMsmqMessage(BrokeredMessage sbusMessage)
+        public static Message PackServiceBusMessageIntoMsmqMessage(BrokeredMessage serviceBusMessage)
         {
-            Message msmqMessage = new Message(sbusMessage);
-            msmqMessage.Label = sbusMessage.Label;
+            var msmqMessage = new Message(serviceBusMessage)
+            {
+                Label = serviceBusMessage.Label
+            };
             return msmqMessage;
         }
 
         // Extract a single brokered message from an MSMQ message.
-        public static BrokeredMessage UnpackSbusMessageFromMsmqMessage(Message msmqMessage)
+        public static BrokeredMessage UnpackServiceBusMessageFromMsmqMessage(Message msmqMessage)
         {
-            BrokeredMessage brokeredMessage = (BrokeredMessage)msmqMessage.Body;
+            var brokeredMessage = (BrokeredMessage) msmqMessage.Body;
             return brokeredMessage;
         }
     }

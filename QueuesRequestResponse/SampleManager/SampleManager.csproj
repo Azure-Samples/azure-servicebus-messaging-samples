@@ -8,7 +8,7 @@
     <ProjectGuid>{2D854EB4-9282-4AEF-A3DC-8972481FF39B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.ServiceBus.Samples</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>SampleManager</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

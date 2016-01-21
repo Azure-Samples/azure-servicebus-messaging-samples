@@ -60,14 +60,14 @@ namespace Microsoft.ServiceBus.Samples.SimplePubSub
             Console.WriteLine("\nCreating Topic...");
             TopicDescription mainTopic = namespaceManager.CreateTopic(topicDescription);
 
-            // this sub recieves all messages
+            // this sub receives all messages
             AuditSub = namespaceManager.CreateSubscription(baseTopicName, "AuditSubscription");
 
-            // thus sub recieves messages addressed to First
+            // thus sub receives messages addressed to First
             FirstSub = namespaceManager.CreateSubscription(baseTopicName, "FirstSubscription", 
 	            new SqlFilter("Address LIKE '%First%'"));
 
-            // thus sub recieves messages addressed to Second
+            // thus sub receives messages addressed to Second
             SecondSub = namespaceManager.CreateSubscription(baseTopicName, "SecondSubscription", 
 	            new SqlFilter("Address LIKE '%Second%'"));
 
@@ -91,7 +91,7 @@ namespace Microsoft.ServiceBus.Samples.SimplePubSub
             Console.WriteLine("\nSender complete. Press ENTER");
             Console.ReadLine();
             
-            // start recieve
+            // start receive
             for (int ctr = 0; ctr < 3; ctr++)
             {
                 string subscriptionName = string.Empty;

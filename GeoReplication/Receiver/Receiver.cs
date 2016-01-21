@@ -14,7 +14,7 @@
 // limitations under the License.
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.Samples.BrokeredMessagingGeoReplication
+namespace MessagingSamples
 {
     using System;
     using System.Collections.Generic;
@@ -42,8 +42,8 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
             MessagingFactory primaryFactory = null;
             MessagingFactory secondaryFactory = null;
 
-            Thread primaryReceiverThread = new Thread(Receive);
-            Thread secondaryReceiverThread = new Thread(Receive);
+            var primaryReceiverThread = new Thread(Receive);
+            var secondaryReceiverThread = new Thread(Receive);
 
             try
             {
@@ -52,17 +52,17 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
                 secondaryFactory = secondaryManagementObjects.GetMessagingFactory();
 
                 // Create a primary and secondary queue client.
-                QueueClient primaryQueueClient = primaryFactory.CreateQueueClient(Receiver.QueueName);
-                QueueClient secondaryQueueClient = secondaryFactory.CreateQueueClient(Receiver.QueueName);
+                var primaryQueueClient = primaryFactory.CreateQueueClient(Receiver.QueueName);
+                var secondaryQueueClient = secondaryFactory.CreateQueueClient(Receiver.QueueName);
 
                 // Start thread that receives messages from the primary queue.
-                ReceiverThreadParameters primaryReceiverThreadParameters = new ReceiverThreadParameters();
+                var primaryReceiverThreadParameters = new ReceiverThreadParameters();
                 primaryReceiverThreadParameters.queueClient = primaryQueueClient;
                 primaryReceiverThreadParameters.replica = "primary";
                 primaryReceiverThread.Start(primaryReceiverThreadParameters);
 
                 // Start thread that receives messages from the secondary queue.
-                ReceiverThreadParameters secondaryReceiverThreadParameters = new ReceiverThreadParameters();
+                var secondaryReceiverThreadParameters = new ReceiverThreadParameters();
                 secondaryReceiverThreadParameters.queueClient = secondaryQueueClient;
                 secondaryReceiverThreadParameters.replica = "secondary";
                 secondaryReceiverThread.Start(secondaryReceiverThreadParameters);
@@ -95,9 +95,9 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
 
         static void Receive(object args)
         {
-            ReceiverThreadParameters arguments = (ReceiverThreadParameters)args;
-            QueueClient queueClient = arguments.queueClient;
-            string replica = arguments.replica;
+            var arguments = (ReceiverThreadParameters)args;
+            var queueClient = arguments.queueClient;
+            var replica = arguments.replica;
 
             Console.WriteLine("Receiving messages from {0} queue '{1}'...\n", replica, Receiver.QueueName);
 
@@ -105,7 +105,7 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
             {
                 try
                 {
-                    BrokeredMessage message = queueClient.Receive(TimeSpan.FromSeconds(50));
+                    var message = queueClient.Receive(TimeSpan.FromSeconds(50));
 
                     if (message != null)
                     {

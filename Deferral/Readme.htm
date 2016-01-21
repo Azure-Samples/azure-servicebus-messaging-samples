@@ -1,88 +1,93 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML dir=ltr XMLNS:MSHelp = "http://msdn.microsoft.com/mshelp" xmlns:ddue = 
-"http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink = 
-"http://www.w3.org/1999/xlink" xmlns:tool = "http://www.microsoft.com/tooltip"
-XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
-"http://ddue.schemas.microsoft.com/authoring/2003/5"><HEAD>
-  <TITLE>Windows Azure Service Bus Deferred Messages Sample</TITLE>
-  <META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
-  <META name=save content=history></META>
-  <LINK rel=stylesheet type=text/css
-  href="../../../CommonFiles/Classic.css"></LINK>
+<HTML dir=ltr XMLNS:MSHelp="http://msdn.microsoft.com/mshelp" xmlns:ddue=
+      "http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink=
+      "http://www.w3.org/1999/xlink" xmlns:tool="http://www.microsoft.com/tooltip"
+      XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
+      "http://ddue.schemas.microsoft.com/authoring/2003/5">
+<HEAD>
+    <TITLE>Windows Azure Service Bus Deferred Messages Sample</TITLE>
+    <META content="text/html; CHARSET=utf-8" http-equiv=Content-Type></META>
+    <META name=save content=history></META>
+    <LINK rel=stylesheet type=text/css
+          href="../../../CommonFiles/Classic.css"></LINK>
 
-  <META name=GENERATOR content="MSHTML 8.00.6001.18783">
+    <META name=GENERATOR content="MSHTML 8.00.6001.18783">
     <style type="text/css">
-      .style1 {
-      font-family: monospace;
-      font-size: 100%;
-      color: #000000;
-      }
-      .style2 {
-      font-family: monospace;
-      font-size: small;
-      color: #000000;
-      }
-      </style>
-  </HEAD>
+        .style1 {
+            font-family: monospace;
+            font-size: 100%;
+            color: #000000;
+        }
+
+        .style2 {
+            font-family: monospace;
+            font-size: small;
+            color: #000000;
+        }
+    </style>
+</HEAD>
 <BODY>
-  <DIV id=header>
+<DIV id=header>
     <TABLE id=topTable width="100%">
-      <TBODY>
+        <TBODY>
         <TR id=headerTableRow1>
-          <TD align=left>
-            <SPAN id=runningHeaderText></SPAN>
-          </TD>
+            <TD align=left>
+                <SPAN id=runningHeaderText></SPAN>
+            </TD>
         </TR>
         <TR id=headerTableRow2>
-          <TD align=left>
-            <SPAN id=nsrTitle>Windows Azure Service Bus Deferred Messages Sample</SPAN>
-          </TD>
+            <TD align=left>
+                <SPAN id=nsrTitle>Windows Azure Service Bus Deferred Messages Sample</SPAN>
+            </TD>
         </TR>
         <TR id=headerTableRow3>
-          <TD></TD>
+            <TD></TD>
         </TR>
-      </TBODY>
+        </TBODY>
     </TABLE>
-  </DIV>
-  <DIV id=mainSection>
-    <DIV id=mainBody>
-      <P>
-        This sample demonstrates how to use the message deferral feature of the Windows Azure Service Bus.</P>
-      <P>
-        The sample shows a simple sender and receiver communicating via a Service Bus
-        queue. Both sender and receiver prompt for service namespace credentials. These
-        are used to authenticate with the Access Control service, and acquire an access
-        token that proves to the Service Bus insfrastructure that the client is
-        authorized to access the queue. The sender creates the queue, and sends messages
-        of different priorities into it. The receiver reads until the queue is empty,
-        immediately processing the high-priority messages, and deferring the
-        low-priority messages. The receiver processes the low-priority messages once the
-        queue is empty and all high-priority messages have been taken care of.</P>
-        <P>
-            Message deferral capability is also available for messages received from a subscription.
-            A receiver on a subscription 
-            can defer messages in exactly the same way as it would for a queue, and can 
-            similarly retrieve messages by message receipt.</P>
-      <H2 class=heading>Prerequisites</H2>
-      <DIV id=sectionSection0 class=section>
-        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-          <P xmlns="">
+</DIV>
+<DIV id=mainSection>
+<DIV id=mainBody>
+<P>
+    This sample demonstrates how to use the message deferral feature of the Windows Azure Service Bus.
+</P>
+<P>
+    The sample shows a simple sender and receiver communicating via a Service Bus
+    queue. Both sender and receiver prompt for service namespace credentials. These
+    are used to authenticate with the Access Control service, and acquire an access
+    token that proves to the Service Bus insfrastructure that the client is
+    authorized to access the queue. The sender creates the queue, and sends messages
+    of different priorities into it. The receiver reads until the queue is empty,
+    immediately processing the high-priority messages, and deferring the
+    low-priority messages. The receiver processes the low-priority messages once the
+    queue is empty and all high-priority messages have been taken care of.
+</P>
+<P>
+    Message deferral capability is also available for messages received from a subscription.
+    A receiver on a subscription
+    can defer messages in exactly the same way as it would for a queue, and can
+    similarly retrieve messages by message receipt.
+</P>
+<H2 class=heading>Prerequisites</H2>
+<DIV id=sectionSection0 class=section>
+    <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+        <P xmlns="">
             If you haven't already done so, please read the release notes
-            document that explains how to sign up for a Windows Azure 
+            document that explains how to sign up for a Windows Azure
             account and how to configure your environment.
-          </P>
-        </content>
-      </DIV>
-      <H2 class=heading>Sender</H2>
-      <DIV id=sectionSection1 class="section">
-        <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-          <P xmlns="">
+        </P>
+    </content>
+</DIV>
+<H2 class=heading>Sender</H2>
+<DIV id=sectionSection1 class="section">
+    <content xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+        <P xmlns="">
             The sender obtains user credentials and creates a ServiceBusNamespaceClient
             (namespaceClient). This entity holds the credentials and is used for all
             messaging management operations - in this case, to create a durable queue with a
             well-known name for communication with the receiver.
-          </P>
-          <DIV class=code xmlns="">
+        </P>
+        <DIV class=code xmlns="">
             <SPAN codeLanguage="CSharp">
               <TABLE cellSpacing=0 cellPadding=0 width="100%">
                 <TBODY>
@@ -120,22 +125,22 @@ XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
                 </TBODY>
               </TABLE>
             </SPAN>
-          </DIV>
-          <p xmlns="">
+        </DIV>
+        <p xmlns="">
             The preceding code prompts for the issuer credential and then constructs the
             listening URI using that information. The static <code>
-              ServiceBusEnvironment.CreateServiceUri
-            </code> function is provided to help construct the URI with the correct format and 
-              domain name. It is strongly recommended that you use this function instead of 
-              building the URI from scratch because the URI construction logic and format 
-              might change in future releases.<code>
-              </code>
-          </p>
-          <P xmlns="">
+                ServiceBusEnvironment.CreateServiceUri
+            </code> function is provided to help construct the URI with the correct format and
+            domain name. It is strongly recommended that you use this function instead of
+            building the URI from scratch because the URI construction logic and format
+            might change in future releases.<code>
+            </code>
+        </p>
+        <P xmlns="">
             The sender then creates a QueueClient, an entity used
             to create senders/receivers on a queue:<BR>
-          </P>
-          <DIV class=code xmlns="">
+        </P>
+        <DIV class=code xmlns="">
             <SPAN codeLanguage="CSharp">
               <TABLE cellSpacing="0" cellPadding="0" width="100%">
                 <TBODY>
@@ -158,14 +163,14 @@ XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
                 </TBODY>
               </TABLE>
             </SPAN>
-          </DIV>
-          <P xmlns="">
+        </DIV>
+        <P xmlns="">
             The sender opens a MessageSender using the QueueClient, generates a few
             messages of different priorities, and sends them into the queue. The sender
             waits for user input to close, and deletes the queue (queue messages
             automatically deleted) to clean up.
-          </P>
-          <div class="code" xmlns="">
+        </P>
+        <div class="code" xmlns="">
             <span codelanguage="CSharp">
               <table cellpadding="0" cellspacing="0" width="100%">
                 <tr>
@@ -218,19 +223,19 @@ XMLNS:[default] http://ddue.schemas.microsoft.com/authoring/2003/5 =
                 </tr>
               </table>
             </span>
-          </div>
-        </content>
-      </DIV>
-      <H2 class=heading>Receiver</H2>
-      <DIV id=sectionSection2 class=section>
-        <content
-xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
-          <P xmlns="">
+        </div>
+    </content>
+</DIV>
+<H2 class=heading>Receiver</H2>
+<DIV id=sectionSection2 class=section>
+    <content
+        xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+        <P xmlns="">
             The receiver also prompts for credentials. Since the queue was created
             by the sender, the receiver only needs the runtime QueueClient in order to
             create queue receivers:
-          </P>
-          <DIV class=code xmlns="">
+        </P>
+        <DIV class=code xmlns="">
             <SPAN codeLanguage="CSharp">
               <TABLE cellSpacing=0 cellPadding=0 width="100%">
                 <TBODY>
@@ -267,19 +272,20 @@ xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
                 </TBODY>
               </TABLE>
             </SPAN>
-          </DIV>
-        </content>
-      </DIV>
-      <P xmlns="">
-        The receiver opens a MessageReceiver on the queue and keeps on receiving
-        until the queue is empty. Any high-priority messages are
-        immeditately processed. Low-priority messages are deferred, and their message
-        receipts are tracked. (NOTE: deferred messages can only be retrieved by message
-        receipt, so it is important to keep track of those receipts.) Once the queue is
-        empty and all high-priority messages have been processed, the receiver returns
-        to the deferred messages, retrieves them by message receipt, and processes them.</P>
-      <DIV class=code xmlns="">
-        <SPAN codeLanguage="CSharp">
+        </DIV>
+    </content>
+</DIV>
+<P xmlns="">
+    The receiver opens a MessageReceiver on the queue and keeps on receiving
+    until the queue is empty. Any high-priority messages are
+    immeditately processed. Low-priority messages are deferred, and their message
+    receipts are tracked. (NOTE: deferred messages can only be retrieved by message
+    receipt, so it is important to keep track of those receipts.) Once the queue is
+    empty and all high-priority messages have been processed, the receiver returns
+    to the deferred messages, retrieves them by message receipt, and processes them.
+</P>
+<DIV class=code xmlns="">
+    <SPAN codeLanguage="CSharp">
           <TABLE cellSpacing=0 cellPadding=0 width="100%">
             <TBODY>
               <TR>
@@ -343,24 +349,24 @@ xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
             </TBODY>
           </TABLE>
         </SPAN>
-      </DIV>
-    </DIV>
-    <H2 class=heading>Running the Sample</H2>
-    <DIV id=DIV1 class=section>
-      <content
-xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
+</DIV>
+</DIV>
+<H2 class=heading>Running the Sample</H2>
+<DIV id=DIV1 class=section>
+    <content
+        xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
         <P xmlns="">
-          To run the sample, build the solution in Visual Studio or from the
-          command line, then run the two resulting executable files. Start the sender first, 
-            then start the receiver. Once the receiver has completed, close the sender to 
+            To run the sample, build the solution in Visual Studio or from the
+            command line, then run the two resulting executable files. Start the sender first,
+            then start the receiver. Once the receiver has completed, close the sender to
             clean up the messaging entities. Both programs prompt for your Service Bus namespace and the issuer credentials. For the issuer secret,
-          be sure to use the "Default Key" value from the Azure portal, rather than one of the management keys.
+            be sure to use the "Default Key" value from the Azure portal, rather than one of the management keys.
         </P>
         <P xmlns="">
-          <B>Expected Output - Sender</B>
+            <B>Expected Output - Sender</B>
         </P>
         <DIV class=code xmlns="">
-          <SPAN codeLanguage="other">
+            <SPAN codeLanguage="other">
             <TABLE cellSpacing=0 cellPadding=0 width="100%">
               <TBODY>
                 <TR>
@@ -387,10 +393,10 @@ xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
           </SPAN>
         </DIV>
         <P xmlns="">
-          <B>Expected Output - Receiver</B>
+            <B>Expected Output - Receiver</B>
         </P>
         <DIV class=code xmlns="">
-          <SPAN codeLanguage="other">
+            <SPAN codeLanguage="other">
             <TABLE cellSpacing=0 cellPadding=0 width="100%">
               <TBODY>
                 <TR>
@@ -418,16 +424,17 @@ xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5">
             </TABLE>
           </SPAN>
         </DIV>
-      </content>
-    </DIV>
-    <!--[if gte IE 5]><tool:tip avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]-->
-  </DIV>
-  <P xmlns="">
-    <hr />
+    </content>
+</DIV>
+<!--[if gte IE 5]><tool:tip avoidmouse="false" element="languageFilterToolTip"></tool:tip><![endif]-->
+</DIV>
+<P xmlns="">
+    <hr/>
     Did you find this information useful?
     <a href="http://go.microsoft.com/fwlink/?LinkID=155664">
-      Please send your suggestions and comments about the documentation.
+        Please send your suggestions and comments about the documentation.
     </a>
-  </P>
-  </DIV>
-</BODY></HTML>
+</P>
+</DIV>
+</BODY>
+</HTML>

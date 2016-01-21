@@ -8,7 +8,7 @@
     <ProjectGuid>{AE7AF0E7-5365-446E-A7ED-7C2DB65760FF}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Samples.SessionMessages</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>OrderService</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

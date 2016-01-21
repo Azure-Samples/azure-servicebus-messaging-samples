@@ -8,7 +8,7 @@
     <ProjectGuid>{7CCE71DD-E77D-4A0E-8665-60E9FA5E50D2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.ServiceBus.HttpClient</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>Sender</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

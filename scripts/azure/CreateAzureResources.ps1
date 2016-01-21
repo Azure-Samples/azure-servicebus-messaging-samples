@@ -99,12 +99,12 @@ $startTime = Get-Date
 ###########################################################
 
 
-Write-SpecialLog "Creating ServiceBus Relay" (Get-ScriptName) (Get-ScriptLineNumber)
+Write-SpecialLog "Creating ServiceBus Resources" (Get-ScriptName) (Get-ScriptLineNumber)
         
 Select-AzureSubscription -SubscriptionName $subName
 & "$scriptDir\..\init.ps1"
-Write-InfoLog "Creating Relay" (Get-ScriptName) (Get-ScriptLineNumber)
-$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusResources.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] 
+Write-InfoLog "Creating Service Bus Resources" (Get-ScriptName) (Get-ScriptLineNumber)
+$sbKeys = & "$scriptDir\ServiceBus\CreateServiceBusResources.ps1" $config["SERVICEBUS_NAMESPACE"] $config["SERVICEBUS_ENTITY_PATH"] $config["AZURE_LOCATION"] $config["SERVICEBUS_SEND_KEY"] $config["SERVICEBUS_LISTEN_KEY"] $config["SERVICEBUS_MANAGE_KEY"] 
 if($sbKeys)
 {
     & "$scriptDir\..\config\ReplaceStringInFile.ps1" $configFile $configFile @{SERVICEBUS_SEND_KEY=$sbKeys["samplesend"]}

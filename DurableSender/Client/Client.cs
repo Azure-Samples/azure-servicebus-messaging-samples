@@ -1,53 +1,37 @@
-﻿//---------------------------------------------------------------------------------
-// Microsoft (R)  Windows Azure Platform AppFabric SDK
-// Software Development Kit
+﻿//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
 // 
-// Copyright (c) Microsoft Corporation. All rights reserved.  
-//
-// THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
-// EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
-// OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
-//---------------------------------------------------------------------------------
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
 
-namespace Microsoft.ServiceBus.Samples.DurableSender
+namespace MessagingSamples
 {
     using System;
-    using System.Collections.Generic;
-    using System.Data.SqlClient;
+    using System.Threading.Tasks;
     using System.Transactions;
+    using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
+    using Microsoft.ServiceBus.Samples.DurableSender;
 
-    class Client
+    class Program : IDupdetectQueueSendReceiveSample
     {
-        private const string SbusQueueName = "DurableClientQueue";
-        private const string SqlConnectionString = @"Data Source=.\SQLEXPRESS;Initial Catalog=SBGatewayDatabase;Integrated Security=true";
-
-        public static void Main()
+        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
         {
-            string serviceBusNamespace = "YOUR-NAMESPACE";
-            string sasKeyName = "RootManageSharedAccessKey";
-            string sasKeyValue = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX=";
-
-            // Create token provider.
-            Uri namespaceUri = ServiceBusEnvironment.CreateServiceUri("sb", serviceBusNamespace, string.Empty);
-            Console.WriteLine("Namespace URI: " + namespaceUri.ToString());
-            TokenProvider tokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sasKeyName, sasKeyValue);
-
-            // Create namespace manager and create Service Bus queue if it does not exist already.
-            NamespaceManager namespaceManager = new NamespaceManager(namespaceUri, tokenProvider);
-            QueueDescription queueDescription = new QueueDescription(SbusQueueName);
-            queueDescription.RequiresDuplicateDetection = true;
-            if (!namespaceManager.QueueExists(SbusQueueName))
-            {
-                namespaceManager.CreateQueue(queueDescription);
-                Console.WriteLine("Created Service Bus queue \"{0}\".", SbusQueueName);
-            }
-
-            // Create a MessagingFactory.
-            MessagingFactory messagingFactory = MessagingFactory.Create(namespaceUri, tokenProvider);
+            var sendFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken));
 
             // Create a durable sender.
-            DurableSender durableSender = new DurableSender(messagingFactory, SbusQueueName);
+            var durableSender = new DurableSender(sendFactory, queueName);
 
             /*
             ** Send messages.
@@ -56,15 +40,15 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
             // Example 1:
             // Send a message outside a transaction scope. If a transactional MSMQ send queue
             // is used, (Transactional = true) an internal MSMQ transaction is created.
-            BrokeredMessage nonTxMsg = CreateBrokeredMessage(1);
+            var nonTxMsg = CreateBrokeredMessage(1);
             Console.WriteLine("Sending message {0} outside of a transaction.", nonTxMsg.Label);
             durableSender.Send(nonTxMsg);
 
             // Example 2:
             // Send a message inside a transaction scope.
-            BrokeredMessage txMsg = CreateBrokeredMessage(2);
+            var txMsg = CreateBrokeredMessage(2);
             Console.WriteLine("Sending message {0} within a transaction.", txMsg.Label);
-            using (TransactionScope scope = new TransactionScope())
+            using (var scope = new TransactionScope())
             {
                 durableSender.Send(txMsg);
                 scope.Complete();
@@ -75,30 +59,15 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
             // (e.g., SQL server), the transaction is automatically promoted to a distributed
             // transaction. If a non-transactional MSMQ send queue is used, (TransactionalSend = false),
             // sending the message is not part of the transaction.
-            for (int i = 3; i <= 4; i++)
+            for (var i = 3; i <= 4; i++)
             {
-                BrokeredMessage dtcMsg = CreateBrokeredMessage(i);
+                var dtcMsg = CreateBrokeredMessage(i);
                 Console.WriteLine("Sending message {0} within a distributed transaction.", dtcMsg.Label);
                 try
                 {
-                    using (TransactionScope scope = new TransactionScope())
+                    using (var scope = new TransactionScope())
                     {
-                        // Perform a SQL Server operation to force a distributed transaction.
-                        if (!SqlConnectionString.Equals(""))
-                        {
-                            SqlConnection sqlConnection = new SqlConnection(SqlConnectionString);
-                            string commandText = "SELECT * FROM dbo.ContainersTable";
-                            SqlCommand sqlCommand = new SqlCommand(commandText, sqlConnection);
-                            sqlConnection.Open();
-                            sqlCommand.ExecuteNonQuery();
-
-                            // FOR TESTING PURPOSE ONLY: Throw exception to cause the transaction to be aborted. This should
-                            // cause message M3 and M4 to not get enqueued.
-                            //if (i == 4)
-                            //{
-                            //    throw new Exception("SqlFailedException");
-                            //}
-                        }
+                        // SQL Server would be used here, for instance
 
                         // Send message.
                         durableSender.Send(dtcMsg);
@@ -115,12 +84,13 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
             ** Receive messages.
             */
 
-            QueueClient queueClient = messagingFactory.CreateQueueClient(SbusQueueName, ReceiveMode.ReceiveAndDelete);
-            for (int i = 1; i <= 4; i++)
+            var receiveFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken));
+            var receiver = receiveFactory.CreateQueueClient(queueName, ReceiveMode.ReceiveAndDelete);
+            for (var i = 1; i <= 4; i++)
             {
                 try
                 {
-                    BrokeredMessage msg = queueClient.Receive();
+                    var msg = receiver.Receive();
                     if (msg != null)
                     {
                         PrintBrokeredMessage(msg);
@@ -140,19 +110,18 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
             Console.ReadLine();
 
             durableSender.Dispose();
-            queueClient.Close();
-            messagingFactory.Close();
-            namespaceManager.DeleteQueue(SbusQueueName);
+            receiver.Close();
+            sendFactory.Close();
         }
 
         // Create a new Service Bus message.
         public static BrokeredMessage CreateBrokeredMessage(int i)
         {
             // Create a Service Bus message.
-            BrokeredMessage msg = new BrokeredMessage("This is the body of message " + i.ToString());
+            var msg = new BrokeredMessage("This is the body of message " + i);
             msg.Properties.Add("Priority", 1);
             msg.Properties.Add("Importance", "High");
-            msg.Label = "M" + i.ToString();
+            msg.Label = "M" + i;
             msg.TimeToLive = TimeSpan.FromSeconds(90);
             return msg;
         }
@@ -160,18 +129,18 @@ namespace Microsoft.ServiceBus.Samples.DurableSender
         // Print the Service Bus message.
         public static void PrintBrokeredMessage(BrokeredMessage msg)
         {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Received message:");
-                Console.WriteLine("   Label:    " + msg.Label);
-                Console.WriteLine("   Body:     " + msg.GetBody<string>());
-                Console.WriteLine("   Sent at:  " + msg.EnqueuedTimeUtc);
-                Console.WriteLine("   ID:       " + msg.MessageId);
-                Console.WriteLine("   SeqNum:   " + msg.SequenceNumber);
-                foreach (KeyValuePair<string, object> p in msg.Properties)
-                {
-                    Console.WriteLine("   Property: " + p.Key.ToString() + " = " + p.Value.ToString());
-                }
-                Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Received message:");
+            Console.WriteLine("   Label:    " + msg.Label);
+            Console.WriteLine("   Body:     " + msg.GetBody<string>());
+            Console.WriteLine("   Sent at:  " + msg.EnqueuedTimeUtc);
+            Console.WriteLine("   ID:       " + msg.MessageId);
+            Console.WriteLine("   SeqNum:   " + msg.SequenceNumber);
+            foreach (var p in msg.Properties)
+            {
+                Console.WriteLine("   Property: " + p.Key + " = " + p.Value);
+            }
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }

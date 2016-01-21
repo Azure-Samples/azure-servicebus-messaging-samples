@@ -8,7 +8,7 @@
     <ProjectGuid>{B45E7BA3-5FBE-44DB-A260-FDC513191584}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.ServiceBus.Samples.MessagePump</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>MessagePump</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

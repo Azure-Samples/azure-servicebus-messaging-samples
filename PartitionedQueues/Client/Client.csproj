@@ -8,7 +8,7 @@
     <ProjectGuid>{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Samples.PartitionedEntity</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>SenderActiveReplication</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

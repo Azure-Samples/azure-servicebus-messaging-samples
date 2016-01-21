@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DDF067B4-4A62-45D5-9EB5-05F776824E0B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\USERS\CLEMENSV\APPDATA\LOCAL\MICROSOFT\VISUALSTUDIO\14.0\EXTENSIONS\SPPIPIZL.TQS\description.html = ..\..\..\USERS\CLEMENSV\APPDATA\LOCAL\MICROSOFT\VISUALSTUDIO\14.0\EXTENSIONS\SPPIPIZL.TQS\description.html
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncTransactions", "AsyncTransactions.csproj", "{63AF486F-D177-40EB-9128-661758AC17EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63AF486F-D177-40EB-9128-661758AC17EE}.Debug|x86.ActiveCfg = Debug|x86
+		{63AF486F-D177-40EB-9128-661758AC17EE}.Debug|x86.Build.0 = Debug|x86
+		{63AF486F-D177-40EB-9128-661758AC17EE}.Release|x86.ActiveCfg = Release|x86
+		{63AF486F-D177-40EB-9128-661758AC17EE}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

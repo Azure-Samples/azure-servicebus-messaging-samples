@@ -14,12 +14,12 @@
 // limitations under the License.
 //---------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using Microsoft.ServiceBus.Messaging;
-
-namespace Microsoft.Samples.BrokeredMessagingGeoReplication
+namespace MessagingSamples
 {
+    using System;
+    using System.Collections.Generic;
+    using Microsoft.ServiceBus.Messaging;
+
     public class Helper
     {
         static List<Type> intermittentFailureExceptions = new List<Type>();
@@ -30,7 +30,7 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
             intermittentFailureExceptions.Add(typeof(MessagingCommunicationException));
             intermittentFailureExceptions.Add(typeof(TimeoutException));
 
-            int attemptCounter = 1;
+            var attemptCounter = 1;
             while(true)
             {
                 try
@@ -70,8 +70,8 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
                 {
                     // If the send operation failed due to an intermittent failure, increment attemptCounter and try again.
                     // If we tried 3 times already, give up and bubble up exception.
-                    bool intermittent = false;
-                    foreach (Type t in intermittentFailureExceptions)
+                    var intermittent = false;
+                    foreach (var t in intermittentFailureExceptions)
                     {
                         if (e.GetType() == t)
                         {
@@ -99,8 +99,8 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
 
         public static BrokeredMessage CreateSampleMessage(int i)
         {
-            string body = "Message" + i.ToString();
-            BrokeredMessage message = new BrokeredMessage(body);
+            var body = "Message" + i.ToString();
+            var message = new BrokeredMessage(body);
             message.MessageId = i.ToString();
             message.TimeToLive = TimeSpan.FromMinutes(2.0);
 

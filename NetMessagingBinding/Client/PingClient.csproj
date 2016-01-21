@@ -8,7 +8,7 @@
     <ProjectGuid>{9F78C49A-31BF-48C1-9A51-046C1D068F81}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Samples.SessionMessages</RootNamespace>
+    <RootNamespace>MessagingSamples</RootNamespace>
     <AssemblyName>PingClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>

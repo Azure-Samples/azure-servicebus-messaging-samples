@@ -14,7 +14,7 @@
 // limitations under the License.
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.Samples.BrokeredMessagingGeoReplication
+namespace MessagingSamples
 {
     using System;
     using Microsoft.ServiceBus.Messaging;
@@ -25,10 +25,7 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
 
         static void Main(string[] args)
         {
-            ManagementObjects primaryManagementObjects = new ManagementObjects("primary");
-            ManagementObjects secondaryManagementObjects = new ManagementObjects("secondary");
-
-            MessagingFactory primaryFactory = null;
+          MessagingFactory primaryFactory = null;
             MessagingFactory secondaryFactory = null;
 
             try
@@ -44,24 +41,24 @@ namespace Microsoft.Samples.BrokeredMessagingGeoReplication
                 secondaryManagementObjects.CreateQueue(SenderActiveReplication.QueueName);
 
                 // Create a primary and secondary queue client.
-                QueueClient primaryQueueClient = primaryFactory.CreateQueueClient(SenderActiveReplication.QueueName);
-                QueueClient secondaryQueueClient = secondaryFactory.CreateQueueClient(SenderActiveReplication.QueueName);
+                var primaryQueueClient = primaryFactory.CreateQueueClient(SenderActiveReplication.QueueName);
+                var secondaryQueueClient = secondaryFactory.CreateQueueClient(SenderActiveReplication.QueueName);
 
                 //*****************************************************************************************************
                 //                                   Sending messages
                 //*****************************************************************************************************
                 Console.WriteLine("\nSending messages to primary and secondary queues...\n");
 
-                for (int i=1; i<=5; i++)
+                for (var i=1; i<=5; i++)
                 {
                     // Create brokered message.
-                    BrokeredMessage m1 = Helper.CreateSampleMessage(i);
+                    var m1 = Helper.CreateSampleMessage(i);
 
                     // Clone message so we can send clone to secondary in case sending to the primary fails.
-                    BrokeredMessage m2 = m1.Clone();
+                    var m2 = m1.Clone();
 
                     Exception ex;
-                    int exceptionCount = 0;
+                    var exceptionCount = 0;
 
                     // Send message to primary queue.
                     try

@@ -8,9 +8,12 @@ Param(
     [String]$Path,                                  # required    needs to be alphanumeric or '-'
     [Parameter(Mandatory = $true)]                            
     [String]$Location = "West Europe",              # optional    default to "West Europe"
+    [String]$SendKey = $null,
+    [String]$ListenKey = $null,
+    [String]$ManageKey = $null,
     [String]$UserMetadata = $null,                  # optional    default to $null
     [Bool]$CreateACSNamespace = $False              # optional    default to $false
-    )
+  )
 
 
 ###########################################################
@@ -42,9 +45,9 @@ $startTime = Get-Date
 
 
 
-$SendKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey()
-$ListenKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() 
-$ManageKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey()
+if ( $SendKey -eq $null -Or $SendKey.StartsWith("{") ) { $SendKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() }
+if ( $ListenKey -eq $null -Or $ListenKey.StartsWith("{") ) { $ListenKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() } 
+if ( $ManageKey -eq $null -Or $ManageKey.StartsWith("{") ) { $ManageKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() }
 
 $SendRuleName = "samplesend"
 $ListenRuleName = "samplelisten"
@@ -78,132 +81,174 @@ else
     $null = New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
 }
 
-# Create the NamespaceManager object to create the Relay
+# Create the NamespaceManager object
 Write-InfoLog "Creating a NamespaceManager object for the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
 $NamespaceManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectionString($CurrentNamespace.ConnectionString);
 Write-InfoLog "NamespaceManager object for the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
 
 
-$scriptCreateQueue = {
-    param($queuePath)
+function Set-Rule([Microsoft.ServiceBus.Messaging.AuthorizationRules] $AuthorizationRules, 
+                  [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule] $Rule)
+{   
+   [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule] $ExistingRule = $null
+   if ($AuthorizationRules.TryGetSharedAccessAuthorizationRule($Rule.$KeyName, [ref]$ExistingRule))
+    {
+        $ExistingRule.PrimaryKey = $Rule.PrimaryKey
+    }
+    else
+    {
+        $AuthorizationRules.Add($Rule)
+    }
+}
 
-    $QueueDescription = $null
+function Create-Queue($queuePath, 
+          $requiresSession = $false,
+          $requiresDuplicateDetection = $false,
+          $supportOrdering = $false,
+          $enablePartitioning = $true,
+          $enableDeadLetteringOnMessageExpiration = $true)
+{
+    [Microsoft.ServiceBus.Messaging.QueueDescription]$QueueDescription = $null
     
-    if ($NamespaceManager.QueueExists($queuePath))
+    $queueExists = $NamespaceManager.QueueExists($queuePath)
+    if ($queueExists)
     {
         Write-InfoLog "The queue: $queuePath already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
         $QueueDescription = $NamespaceManager.GetQueue($queuePath)
-        if ( $QueueDescription.QueueType -ne $queueType )
-        {
-            throw "Unexpected type $QueueDescription.QueueType for existing queue $queuePath"
-        }
     }
     else
     {
-        Write-InfoLog "Creating the queue: $queuePath of type $queueType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        Write-InfoLog "Creating the queue: $queuePath in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
         $QueueDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.QueueDescription -ArgumentList $queuePath
-        $QueueDescription = $NamespaceManager.CreateQueue($QueueDescription)
-        Write-InfoLog "The queue: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
-        $QueueDescription = $NamespaceManager.GetQueue($queuePath)
     }
+
+    $QueueDescription.RequiresSession = $requiresSession
+    $QueueDescription.RequiresDuplicateDetection = $requiresDuplicateDetection
+    $QueueDescription.SupportOrdering = $supportOrdering
+    $QueueDescription.EnablePartitioning = $enablePartitioning
+    $QueueDescription.EnableDeadLetteringOnMessageExpiration = $enableDeadLetteringOnMessageExpiration        
     
-    $Rule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
-    $SendRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
-    $ListenRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights
-    $ManageRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights
-    
-    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($SendRuleName, [ref]$Rule))
+    Set-Rule $QueueDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights)
+    Set-Rule $QueueDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights)
+    Set-Rule $QueueDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights)
+
+    if ($queueExists)
     {
-        $Rule.PrimaryKey = $SendKey
+         $NamespaceManager.UpdateQueue($QueueDescription)
     }
     else
     {
-        $QueueDescription.Authorization.Add($SendRule)
+        $NamespaceManager.CreateQueue($QueueDescription)
     }
-    
-    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($ListenRuleName, [ref]$Rule))
-    {
-        $Rule.PrimaryKey = $ListenKey
-    }
-    else
-    {
-        $QueueDescription.Authorization.Add($ListenRule)
-    }
-    
-    if ( $QueueDescription.Authorization.TryGetSharedAccessAuthorizationRule($ManageRuleName, [ref]$Rule))
-    {
-        $Rule.PrimaryKey = $ManageKey
-    }
-    else
-    {
-        $QueueDescription.Authorization.Add($ManageRule)
-    }
-    
-    $QueueDescription = $NamespaceManager.UpdateQueueAsync($QueueDescription).GetAwaiter().GetResult();
 }
 
-$scriptCreateTopic = {
-    param($topicPath)
-
-    $TopicDescription = $null
-    $SubDescription = $null
+function Create-Topic($topicPath,
+          $requiresDuplicateDetection = $false,
+          $supportOrdering = $false,
+          $enablePartitioning = $false,
+          $enableFilteringMessagesBeforePublishing = $false)
+{
+    [Microsoft.ServiceBus.Messaging.TopicDescription]$TopicDescription = $null
     
-    if ($NamespaceManager.TopicExistsAsync($topicPath).GetAwaiter().GetResult())
+    $topicExists = $NamespaceManager.TopicExists($topicPath)
+    if ($topicExists)
     {
         Write-InfoLog "The topic: $topicPath already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
-        $TopicDescription = $NamespaceManager.GetTopicAsync($topicPath).GetAwaiter().GetResult()
-        if ( $TopicDescription.TopicType -ne $topicType )
-        {
-            throw "Unexpected type $TopicDescription.TopicType for existing topic $topicPath"
-        }
-    }
-    else
-    {
-        Write-InfoLog "Creating the topic: $topicPath of type $topicType in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
-        $TopicDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.TopicDescription -ArgumentList $topicPath
-        $TopicDescription = $NamespaceManager.CreateTopic($TopicDescription)
-        $SubDescription = $NamespaceManager.CreateSubscription($topicPath, "default")
-        Write-InfoLog "The topic: $Path in the namespace: $Namespace has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
         $TopicDescription = $NamespaceManager.GetTopic($topicPath)
     }
-    
-    $Rule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
-    $SendRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights
-    $ListenRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights
-    $ManageRule = New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights
-    
-    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($SendRuleName, [ref]$Rule))
+    else
     {
-        $Rule.PrimaryKey = $SendKey
+        Write-InfoLog "Creating the topic: $topicPath in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        $TopicDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.TopicDescription -ArgumentList $topicPath
+    }
+
+    $TopicDescription.RequiresDuplicateDetection = $requiresDuplicateDetection
+    $TopicDescription.SupportOrdering = $supportOrdering
+    $TopicDescription.EnablePartitioning = $enablePartitioning
+    $TopicDescription.EnableFilteringMessagesBeforePublishing = $enableFilteringMessagesBeforePublishing        
+    
+    Set-Rule $TopicDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $SendRuleName, $SendKey, $SendAccessRights)
+    Set-Rule $TopicDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ListenRuleName, $ListenKey, $ListenAccessRights)
+    Set-Rule $TopicDescription.Authorization (New-Object -TypeName Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule -ArgumentList $ManageRuleName, $ManageKey, $ManageAccessRights)
+
+    if ($topicExists)
+    {
+         $NamespaceManager.UpdateTopic($TopicDescription)
     }
     else
     {
-        $TopicDescription.Authorization.Add($SendRule)
+        $NamespaceManager.CreateTopic($TopicDescription)
     }
-    
-    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($ListenRuleName, [ref]$Rule))
-    {
-        $Rule.PrimaryKey = $ListenKey
-    }
-    else
-    {
-        $TopicDescription.Authorization.Add($ListenRule)
-    }
-    
-    if ( $TopicDescription.Authorization.TryGetSharedAccessAuthorizationRule($ManageRuleName, [ref]$Rule))
-    {
-        $Rule.PrimaryKey = $ManageKey
-    }
-    else
-    {
-        $TopicDescription.Authorization.Add($ManageRule)
-    }
-    
-    $TopicDescription = $NamespaceManager.UpdateTopicAsync($TopicDescription).GetAwaiter().GetResult();
 }
 
-& Invoke-Command $scriptCreateQueue -ArgumentList "queue"
-& Invoke-Command $scriptCreateTopic -ArgumentList "topic"
+function Create-Subscription($topicPath,
+          $subscriptionName,
+          $requiresSession = $false,
+          $enableDeadLetteringOnMessageExpiration = $true,
+          $enableDeadLetteringOnFilterEvaluationExceptions = $true, 
+          [Microsoft.ServiceBus.Messaging.Filter]$filter = $null )
+{
+    [Microsoft.ServiceBus.Messaging.SubscriptionDescription]$SubscriptionDescription = $null
+    
+    if ( $filter -eq $null )
+    {
+        $filter = New-Object -TypeName Microsoft.ServiceBus.Messaging.TrueFilter
+    }
+    
+    $subscriptionExists = $NamespaceManager.SubscriptionExists($topicPath, $subscriptionName)
+    if ($subscriptionExists)
+    {
+        Write-InfoLog "The subscription: $subscriptionName already exists in the namespace: $Namespace." (Get-ScriptName) (Get-ScriptLineNumber)
+        $SubscriptionDescription = $NamespaceManager.GetSubscription($topicPath, $subscriptionName)
+    }
+    else
+    {
+        Write-InfoLog "Creating the subscription: $subscriptionName in the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
+        $SubscriptionDescription = New-Object -TypeName Microsoft.ServiceBus.Messaging.SubscriptionDescription -ArgumentList $topicPath, $subscriptionName
+    }
+
+    $SubscriptionDescription.RequiresSession = $requiresSession
+    $SubscriptionDescription.EnableDeadLetteringOnMessageExpiration = $enableDeadLetteringOnMessageExpiration  
+    $SubscriptionDescription.EnableDeadLetteringOnFilterEvaluationExceptions = $enableDeadLetteringOnFilterEvaluationExceptions
+    
+    if ($subscriptionExists)
+    {
+         $NamespaceManager.UpdateSubscription($SubscriptionDescription)
+    }
+    else
+    {
+        $NamespaceManager.CreateSubscription($SubscriptionDescription, $filter)
+    }
+}
+
+$r = Create-Queue -queuePath "BasicQueue" -enablePartitioning $false
+$r = Create-Queue -queuePath "BasicQueue2" -enablePartitioning $false
+$r = Create-Queue -queuePath "SessionQueue" -requiresSession $true -supportOrdering $true -enablePartitioning $false
+$r = Create-Queue -queuePath "DupdetectQueue" -requiresDuplicateDetection $true -enablePartitioning $true
+$r = Create-Queue -queuePath "PartitionedQueue" -enablePartitioning $true
+
+
+$r = Create-Topic -topicPath "BasicTopic"
+$r = Create-Subscription -topicPath "BasicTopic" -subscriptionName "Subscription1"
+$r = Create-Subscription -topicPath "BasicTopic" -subscriptionName "Subscription2"
+$r = Create-Subscription -topicPath "BasicTopic" -subscriptionName "Subscription3" 
+$r = Create-Topic -topicPath "BasicTopic2"
+$r = Create-Subscription -topicPath "BasicTopic2" -subscriptionName "Subscription1"
+$r = Create-Subscription -topicPath "BasicTopic2" -subscriptionName "Subscription2"
+$r = Create-Subscription -topicPath "BasicTopic2" -subscriptionName "Subscription3" 
+$r = Create-Topic -topicPath "DupdetectTopic" -requiresDuplicateDetection $true
+$r = Create-Subscription -topicPath "DupdetectTopic" -subscriptionName "Subscription1"
+$r = Create-Subscription -topicPath "DupdetectTopic" -subscriptionName "Subscription2"
+$r = Create-Subscription -topicPath "DupdetectTopic" -subscriptionName "Subscription3" 
+$r = Create-Topic -topicPath "PrePublishFilterTopic" -enableFilteringMessagesBeforePublishing $true
+$r = Create-Subscription -topicPath "PrePublishFilterTopic" -subscriptionName "Subscription1"
+$r = Create-Subscription -topicPath "PrePublishFilterTopic" -subscriptionName "Subscription2"
+$r = Create-Subscription -topicPath "PrePublishFilterTopic" -subscriptionName "Subscription3" 
+$r = Create-Topic -topicPath "PartitionedTopic" -supportOrdering $false -enablePartitioning $true
+$r = Create-Subscription -topicPath "PartitionedTopic" -subscriptionName "Subscription1"
+$r = Create-Subscription -topicPath "PartitionedTopic" -subscriptionName "Subscription2"
+$r = Create-Subscription -topicPath "PartitionedTopic" -subscriptionName "Subscription3" 
+
 
 $finishTime = Get-Date
 $totalSeconds = ($finishTime - $startTime).TotalSeconds
