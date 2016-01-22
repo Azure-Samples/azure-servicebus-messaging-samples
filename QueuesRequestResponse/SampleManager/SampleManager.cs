@@ -14,7 +14,7 @@
 // limitations under the License.
 //---------------------------------------------------------------------------------
 
-namespace Microsoft.ServiceBus.Samples.RequestResponse
+namespace MessagingSamples
 {
     using System;
     using System.Collections.Generic;
@@ -24,7 +24,6 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
     using System.Windows.Forms;
     using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
-
 
     public class SampleManager
     {
@@ -73,9 +72,9 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
             // Create queues:
             Console.WriteLine("\nCreating Queues...");
-            QueueDescription requestQueue = CreateQueue(false);
+            var requestQueue = CreateQueue(false);
             Console.WriteLine("Created {0}, Queue.RequiresSession = false", requestQueue.Path);
-            QueueDescription responseQueue = CreateQueue(true);
+            var responseQueue = CreateQueue(true);
             Console.WriteLine("Created {0}, Queue.RequiresSession = true", responseQueue.Path);
 
             // Start clients and servers:
@@ -118,8 +117,8 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static QueueDescription CreateQueue(bool session)
         {
-            string queueName = (session ? responseQueueName : requestQueueName);
-            QueueDescription queueDescription = new QueueDescription(queueName) { RequiresSession = session };
+            var queueName = (session ? responseQueueName : requestQueueName);
+            var queueDescription = new QueueDescription(queueName) { RequiresSession = session };
 
             // Try deleting the queue before creation. Ignore exception if queue does not exist.
             try
@@ -135,12 +134,12 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static void StartClients()
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
+            var startInfo = new ProcessStartInfo();
             startInfo.FileName = "RequestResponseSampleClient.exe";
-            for (int i = 0; i < numClients; ++i)
+            for (var i = 0; i < numClients; ++i)
             {
                 startInfo.Arguments = CreateArgs(i.ToString());
-                Process process = Process.Start(startInfo);
+                var process = Process.Start(startInfo);
                 clientProcs.Add(process);
             }
             Thread.Sleep(500);
@@ -149,7 +148,7 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static void StopClients()
         {
-            foreach (Process proc in clientProcs)
+            foreach (var proc in clientProcs)
             {
                 proc.CloseMainWindow();
             }
@@ -157,12 +156,12 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static void StartServers()
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
+            var startInfo = new ProcessStartInfo();
             startInfo.FileName = "RequestResponseSampleServer.exe";
             startInfo.Arguments = CreateArgs();
-            for (int i = 0; i < numServers; ++i)
+            for (var i = 0; i < numServers; ++i)
             {
-                Process process = Process.Start(startInfo);
+                var process = Process.Start(startInfo);
                 serverProcs.Add(process);
             }
             Thread.Sleep(500);
@@ -171,7 +170,7 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static void StopServers()
         {
-            foreach (Process proc in serverProcs)
+            foreach (var proc in serverProcs)
             {
                 proc.CloseMainWindow();
             }
@@ -179,7 +178,7 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static string CreateArgs(string responseToSessionId = null)
         {
-            string args = serviceBusConnectionString;
+            var args = serviceBusConnectionString;
             if (responseToSessionId != null)
             {
                 args += " " + responseToSessionId;
@@ -189,19 +188,19 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
 
         static void ArrangeWindows()
         {
-            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
-            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+            var screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            var screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
 
-            int maxHeight = screenHeight / 3;
-            int maxWidth = screenWidth / 2;
+            var maxHeight = screenHeight / 3;
+            var maxWidth = screenWidth / 2;
 
 
-            int senderWidth = screenWidth / (numClients + 1);
-            int senderHeight = maxHeight;
-            int managerWidth = senderWidth;
-            int managerHeight = senderHeight;
-            int receiverWidth = screenWidth / (numServers);
-            int receiverHeight = screenHeight / 2;
+            var senderWidth = screenWidth / (numClients + 1);
+            var senderHeight = maxHeight;
+            var managerWidth = senderWidth;
+            var managerHeight = senderHeight;
+            var receiverWidth = screenWidth / (numServers);
+            var receiverHeight = screenHeight / 2;
             if (displayVertical)
             {
                 senderWidth = screenWidth / 3;
@@ -213,12 +212,12 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
             }
 
             Console.Title = "Manager";
-            IntPtr mainHandle = Process.GetCurrentProcess().MainWindowHandle;
+            var mainHandle = Process.GetCurrentProcess().MainWindowHandle;
             SetWindowPos(mainHandle, HWND_TOP, 0, 0, managerWidth, managerHeight, 0);
 
-            for (int i = 0; i < clientProcs.Count; ++i)
+            for (var i = 0; i < clientProcs.Count; ++i)
             {
-                IntPtr handle = clientProcs[i].MainWindowHandle;
+                var handle = clientProcs[i].MainWindowHandle;
                 if (displayVertical)
                 {
                     SetWindowPos(handle, HWND_TOP, 0, senderHeight * (i + 1), senderWidth, senderHeight, 0);
@@ -229,9 +228,9 @@ namespace Microsoft.ServiceBus.Samples.RequestResponse
                 }
             }
 
-            for (int i = 0; i < serverProcs.Count; ++i)
+            for (var i = 0; i < serverProcs.Count; ++i)
             {
-                IntPtr handle = serverProcs[i].MainWindowHandle;
+                var handle = serverProcs[i].MainWindowHandle;
                 if (displayVertical)
                 {
                     SetWindowPos(handle, HWND_TOP, screenWidth - receiverWidth, receiverHeight * i, receiverWidth, receiverHeight, 0);
