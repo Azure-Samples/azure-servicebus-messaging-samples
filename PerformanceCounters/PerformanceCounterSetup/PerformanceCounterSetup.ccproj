@@ -5,14 +5,13 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>2.8</ProductVersion>
-    <ProjectGuid>a7d4dc22-aa61-4857-87bf-36f50b6ad621</ProjectGuid>
+    <ProjectGuid>7a7ea4b5-fd76-4655-9582-fad3d0a7f603</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ServiceBusPerfCounters</RootNamespace>
-    <AssemblyName>ServiceBusPerfCounters</AssemblyName>
+    <RootNamespace>PerformanceCounterSetup</RootNamespace>
+    <AssemblyName>PerformanceCounterSetup</AssemblyName>
     <StartDevelopmentStorage>True</StartDevelopmentStorage>
-    <Name>ServiceBusPerfCounters</Name>
-    <PackageEnableRemoteDebugger>False</PackageEnableRemoteDebugger>
+    <Name>PerformanceCounterSetup</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,12 +51,10 @@
     <Folder Include="WorkerRole1Content\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="WorkerRole1Content\diagnostics.wadcfg">
-      <SubType>Content</SubType>
-    </Content>
+    <DiagnosticsConfiguration Include="WorkerRole1Content\diagnostics.wadcfgx" />
   </ItemGroup>
   <ItemGroup>
-    <PublishProfile Include="Profiles\cvsmpltstProduction.azurePubxml" />
+    <PublishProfile Include="Profiles\cvtest1Production.azurePubxml" />
   </ItemGroup>
   <!-- Import the target files for this project template -->
   <PropertyGroup>

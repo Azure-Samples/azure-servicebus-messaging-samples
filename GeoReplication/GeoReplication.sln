@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{84D60567-DAD4-47CF-B0E2-B9993BC76171}"
 	ProjectSection(SolutionItems) = preProject
 		Readme.htm = Readme.htm
@@ -9,8 +11,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SenderActiveReplication", "SenderActiveReplication\SenderActiveReplication.csproj", "{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Receiver", "Receiver\Receiver.csproj", "{3212E2FD-B7DF-47DA-92E2-CF9AF50EEC27}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{55D844F7-1A78-4F69-AE96-B044E17756F8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SenderPassiveReplication", "SenderPassiveReplication\SenderPassiveReplication.csproj", "{60FB9368-6354-4251-9A80-D7293A759051}"
 EndProject
@@ -52,19 +52,6 @@ Global
 		{3212E2FD-B7DF-47DA-92E2-CF9AF50EEC27}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{3212E2FD-B7DF-47DA-92E2-CF9AF50EEC27}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{3212E2FD-B7DF-47DA-92E2-CF9AF50EEC27}.Release|x86.ActiveCfg = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|AnyCPU.Build.0 = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|AnyCPU.ActiveCfg = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{55D844F7-1A78-4F69-AE96-B044E17756F8}.Release|x86.ActiveCfg = Release|Any CPU
 		{60FB9368-6354-4251-9A80-D7293A759051}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{60FB9368-6354-4251-9A80-D7293A759051}.Debug|AnyCPU.ActiveCfg = Debug|x86
 		{60FB9368-6354-4251-9A80-D7293A759051}.Debug|Mixed Platforms.ActiveCfg = Debug|x86

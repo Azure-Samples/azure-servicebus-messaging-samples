@@ -328,7 +328,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
             }
 
             else if (program is IDualQueueSendReceiveFlipsideSample)
@@ -351,7 +351,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveFlipsideSample)program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveFlipsideSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDualBasicQueueSampleWithKeys)
             {
@@ -362,7 +362,8 @@ namespace MessagingSamples
                     "samplesend",
                     properties[servicebusSendKey],
                     "samplelisten",
-                    properties[servicebusListenKey]).GetAwaiter().GetResult(); ;
+                    properties[servicebusListenKey]).GetAwaiter().GetResult();
+                ;
             }
         }
     }
@@ -450,6 +451,13 @@ namespace MessagingSamples
 
     interface IDualBasicQueueSampleWithKeys
     {
-        Task Run(string namespaceAddress, string basicQueueName, string basicQueue2Name, string sendKeyName, string sendKey, string receiveKeyName, string receiveKey);
+        Task Run(
+            string namespaceAddress,
+            string basicQueueName,
+            string basicQueue2Name,
+            string sendKeyName,
+            string sendKey,
+            string receiveKeyName,
+            string receiveKey);
     }
 }
