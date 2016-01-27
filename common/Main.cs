@@ -168,6 +168,49 @@ namespace MessagingSamples
 
                 ((IBasicQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
+            else if (program is IPartitionedQueueSendReceiveSample)
+            {
+                var entityName = "PartitionedQueue";
+                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+
+                var sendToken =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplesend",
+                        properties[servicebusSendKey])
+                        .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+                var receiveToken =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplelisten",
+                        properties[servicebusListenKey])
+                        .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+
+                ((IPartitionedQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+            }
+            else if (program is IPartitionedQueueSendSample)
+            {
+                var entityName = "PartitionedQueue";
+                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+
+                var sendToken =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplesend",
+                        properties[servicebusSendKey])
+                        .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+
+                ((IPartitionedQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+            }
+            else if (program is IPartitionedQueueReceiveSample)
+            {
+                var entityName = "PartitionedQueue";
+                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var receiveToken =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplelisten",
+                        properties[servicebusListenKey])
+                        .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+
+                ((IPartitionedQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+            }
             else if (program is ISessionQueueSendReceiveSample)
             {
                 var entityName = "SessionQueue";
@@ -298,6 +341,7 @@ namespace MessagingSamples
                 ((IBasicTopicReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
 
+
             else if (program is IConnectionStringSample)
             {
                 var connectionString =
@@ -383,6 +427,21 @@ namespace MessagingSamples
         Task Run(string namespaceAddress, string queueName, string receiveToken);
     }
 
+    interface IPartitionedQueueSendReceiveSample
+    {
+        Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken);
+    }
+
+    interface IPartitionedQueueSendSample
+    {
+        Task Run(string namespaceAddress, string queueName, string sendToken);
+    }
+
+    interface IPartitionedQueueReceiveSample
+    {
+        Task Run(string namespaceAddress, string queueName, string receiveToken);
+    }
+
     interface ISessionQueueSendReceiveSample
     {
         Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken);
@@ -412,6 +471,24 @@ namespace MessagingSamples
     {
         Task Run(string namespaceAddress, string TopicName, string receiveToken);
     }
+
+
+    interface IPartitionedTopicSendReceiveSample
+    {
+        Task Run(string namespaceAddress, string TopicName, string sendToken, string receiveToken);
+    }
+
+    interface IPartitionedTopicSendSample
+    {
+        Task Run(string namespaceAddress, string TopicName, string sendToken);
+    }
+
+    interface IPartitionedTopicReceiveSample
+    {
+        Task Run(string namespaceAddress, string TopicName, string receiveToken);
+    }
+
+
 
 
     interface IDupdetectQueueSendReceiveSample

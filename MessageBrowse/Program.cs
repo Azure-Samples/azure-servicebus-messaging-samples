@@ -20,7 +20,6 @@ namespace MessagingSamples
     using System;
     using System.IO;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
@@ -34,7 +33,7 @@ namespace MessagingSamples
 
             var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
             var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken);
-            
+
             await Task.WhenAll(sendTask, receiveTask);
 
             Console.ReadKey();
@@ -97,52 +96,37 @@ namespace MessagingSamples
                 namespaceAddress,
                 new MessagingFactorySettings
                 {
-                    TransportType = TransportType.Amqp,
+                    TransportType = TransportType.NetMessaging, // Peek doesn't yet work on AMQP
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
                 });
             receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
 
             var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
-            Console.WriteLine("Receiving message from Queue...");
+            Console.WriteLine("Browsing messages from Queue...");
             while (true)
             {
                 try
                 {
                     //receive messages from Queue
-                    var message = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
+                    var message = await receiver.PeekAsync();
                     if (message != null)
                     {
-                        if (message.Label != null &&
-                            message.ContentType != null &&
-                            message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
-                            message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
+                        var body = new StreamReader(message.GetBody<Stream>(), true).ReadToEnd();
+                        lock (Console.Out)
                         {
-                            var body = message.GetBody<Stream>();
-
-                            dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
-
-                            lock (Console.Out)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Cyan;
-                                Console.WriteLine(
-                                    "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
-                                    "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
-                                    message.MessageId,
-                                    message.SequenceNumber,
-                                    message.EnqueuedTimeUtc,
-                                    message.ContentType,
-                                    message.Size,
-                                    message.ExpiresAtUtc,
-                                    scientist.firstName,
-                                    scientist.name);
-                                Console.ResetColor();
-                            }
-                            await message.CompleteAsync();
-                        }
-                        else
-                        {
-                            await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(
+                                "\t\t\t\tMessage peeked: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
+                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ {6} ]",
+                                message.MessageId,
+                                message.SequenceNumber,
+                                message.EnqueuedTimeUtc,
+                                message.ContentType,
+                                message.Size,
+                                message.ExpiresAtUtc,
+                                body);
+                            Console.ResetColor();
                         }
                     }
                     else

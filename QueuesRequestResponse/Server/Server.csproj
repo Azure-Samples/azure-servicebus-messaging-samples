@@ -60,6 +60,7 @@
       <Link>Main.cs</Link>
     </Compile>
     <Compile Include="DelegatingTokenProvider.cs" />
+    <Compile Include="RequestReplyResponder.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
