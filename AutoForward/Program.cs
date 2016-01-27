@@ -24,146 +24,100 @@ namespace MessagingSamples
 
     class Program : IDynamicSample
     {
-        const string SourceTopicName = "SourceTopic";
-        const string SourceTopicSubscriptionName1 = "Sub1";
-        const string SourceTopicSubscriptionName2 = "Sub2";
-        const string DestinationQueueName = "DestinationQueue";
-        const string TransferQueueName = "TransferQueue";
-        const string DestinationQueueSendKeyName = "DestinationQueueSendKey";
-        const string KeyName = "SourceTopicSendKey";
+        string sharedAccessRuleKey;
 
         public async Task Run(string namespaceAddress, string manageToken)
         {
-            // Get the 
+            this.sharedAccessRuleKey = SharedAccessAuthorizationRule.GenerateRandomKey();
             var namespaceManageTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(manageToken);
 
             // Create namespace manager and create destination queue with a SAS rule that allows sending to that queue.
             var namespaceManager = new NamespaceManager(namespaceAddress, namespaceManageTokenProvider);
-            if (namespaceManager.QueueExists(DestinationQueueName))
+
+            var targetQueue = new QueueDescription("TargetQueue")
             {
-                namespaceManager.DeleteQueue(DestinationQueueName);
-            }
-            var destinationQueueDescription = new QueueDescription(DestinationQueueName);
-            var destinationQueueSendKey = SharedAccessAuthorizationRule.GenerateRandomKey();
-            var destinationQueueSendRule = new SharedAccessAuthorizationRule(
-                DestinationQueueSendKeyName,
-                destinationQueueSendKey,
-                new[] {AccessRights.Send});
-            destinationQueueDescription.Authorization.Add(destinationQueueSendRule);
-            var destinationQueue = namespaceManager.CreateQueue(destinationQueueDescription);
-            Console.WriteLine("Created Service Bus queue \"{0}\"", DestinationQueueName);
-
-            // Create message pump for destination queue.
-            var namespaceManageMessagingFactory = MessagingFactory.Create(namespaceAddress, namespaceManageTokenProvider);
-            var destinationQueueClient = namespaceManageMessagingFactory.CreateQueueClient(DestinationQueueName);
-            var options = new OnMessageOptions {AutoComplete = true};
-            destinationQueueClient.OnMessage(receivedMessage => PrintMessage(receivedMessage), options);
-            ;
-
-
-            /*
-            ** Part 1: Use auto-forwarding from Topic1 to Topic2.
-            */
-
-            // Create source topic with a SAS rule that allows sending to that topic.
-            if (namespaceManager.TopicExists(SourceTopicName))
-            {
-                namespaceManager.DeleteTopic(SourceTopicName);
-            }
-            var sourceTopicDescription = new TopicDescription(SourceTopicName);
-            var sourceTopicSendKey = SharedAccessAuthorizationRule.GenerateRandomKey();
-            var sourceTopicSendRule = new SharedAccessAuthorizationRule(
-                KeyName,
-                sourceTopicSendKey,
-                new[] {AccessRights.Send});
-            sourceTopicDescription.Authorization.Add(sourceTopicSendRule);
-            var sourceTopic = namespaceManager.CreateTopic(sourceTopicDescription);
-            Console.WriteLine("Created Service Bus topic \"{0}\"", SourceTopicName);
-
-            // Create subscription on source topic. Configure subscription such that it forwards messages to destination queue.
-            // Note that the destination queue must aleady exist at the time we are creating this subscription.
-            var subscriptionDescription = new SubscriptionDescription(SourceTopicName, SourceTopicSubscriptionName1);
-            subscriptionDescription.ForwardTo = DestinationQueueName;
-            namespaceManager.CreateSubscription(subscriptionDescription);
-            Console.WriteLine("Created Service Bus subscription \"{0}\" on topic \"{1}\"", SourceTopicSubscriptionName1, SourceTopicName);
-
-            // Create a messaging factory and topicClient with send permissions on the source topic. Then send message M1
-            // to sourceTopic. The message is forwarded without the user requiring send permissions on the destination queue.
-            var sourceTopicSendTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                KeyName,
-                sourceTopicSendKey);
-            var sourceTopicSendMessagingFactory = MessagingFactory.Create(namespaceAddress, sourceTopicSendTokenProvider);
-            var topicClient1 = sourceTopicSendMessagingFactory.CreateTopicClient(SourceTopicName);
-            topicClient1.Send(CreateMessage("M1"));
-
-
-            /*
-            ** Part 2: Send message to destination queue via transfer queue.
-            */
-
-            // Create transfer queue with a SAS rule that allows sending to that queue.
-            // Use the same key and key name that is used to authorize send permissions on the destination queue.
-            if (namespaceManager.QueueExists(TransferQueueName))
-            {
-                namespaceManager.DeleteQueue(TransferQueueName);
-            }
-            var transferQueueDescription = new QueueDescription(TransferQueueName);
-            var transferQueueSendRule = new SharedAccessAuthorizationRule(
-                DestinationQueueSendKeyName,
-                destinationQueueSendKey,
-                new[] {AccessRights.Send});
-            transferQueueDescription.Authorization.Add(transferQueueSendRule);
-            namespaceManager.CreateQueue(transferQueueDescription);
-            Console.WriteLine("Created Service Bus queue \"{0}\"", TransferQueueName);
-
-            // Create a sender that send message M2 to the destination queue via a transfer queue.
-            // The sender needs send permissions on the transfer queue and on the destination queue.
-            // Since the token provider can handle only a single key, the key and key name of
-            // transferQueue and destinationQueue must be identical. Alternatively, you can use a root-level key.
-            var transferQueueSendTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                DestinationQueueSendKeyName,
-                destinationQueueSendKey);
-            var transferQueueSendMessagingFactory = MessagingFactory.Create(namespaceAddress, transferQueueSendTokenProvider);
-            var sender = transferQueueSendMessagingFactory.CreateMessageSender(DestinationQueueName, TransferQueueName);
-            sender.Send(CreateMessage("M2"));
-
-
-            /*
-            ** Part 3: Create an autoforward on the deadletter queue of subscription 1.
-            ** Autoforwarding from deadletter queues was introduced in SDK 2.3.
-            */
-
-            var sd2 = new SubscriptionDescription(sourceTopic.Path, SourceTopicSubscriptionName2)
-            {
-                ForwardDeadLetteredMessagesTo = destinationQueue.Path
+                Authorization = { new SharedAccessAuthorizationRule("SendKey", this.sharedAccessRuleKey, new[] { AccessRights.Send }) },
             };
-            namespaceManager.CreateSubscription(sd2);
-            Console.WriteLine("Created subscription \"{0}\" with a deadletter forward to \"{1}\"", SourceTopicSubscriptionName2, DestinationQueueName);
 
-            // Create a client and send message to source topic.
-            var topicClient2 = sourceTopicSendMessagingFactory.CreateTopicClient(SourceTopicName);
-            topicClient2.Send(CreateMessage("M3"));
+            targetQueue = (await namespaceManager.QueueExistsAsync(targetQueue.Path))
+                ? await namespaceManager.UpdateQueueAsync(targetQueue)
+                : await namespaceManager.CreateQueueAsync(targetQueue);
 
-            // Deadletter message.
-            var subscriptionClient = namespaceManageMessagingFactory.CreateSubscriptionClient(
-                sourceTopic.Path,
-                SourceTopicSubscriptionName2);
-            var msg3 = subscriptionClient.Receive();
-            msg3.DeadLetter("Deadlettered for demonstration purposes", "MyErrorText");
-            Console.WriteLine("Deadlettered message \"" + msg3.Label + "\"");
+            var topic = new TopicDescription("SourceTopic")
+            {
+                Authorization = { new SharedAccessAuthorizationRule("SendKey", this.sharedAccessRuleKey, new[] { AccessRights.Send }) }
+            };
+            topic = (await namespaceManager.TopicExistsAsync(topic.Path))
+                ? await namespaceManager.UpdateTopicAsync(topic)
+                : await namespaceManager.CreateTopicAsync(topic);
+            var forwardingSubscription = namespaceManager.CreateSubscription(
+                new SubscriptionDescription(topic.Path, "Sub1")
+                {
+                    ForwardTo = targetQueue.Path
+                });
+
+            var forwardingQueue = new QueueDescription("SourceQueue")
+            {
+                ForwardTo = targetQueue.Path,
+                Authorization =
+                {
+                    new SharedAccessAuthorizationRule(
+                        "SendKey",
+                        this.sharedAccessRuleKey,
+                        new[] {AccessRights.Send})
+                }
+            };
+            forwardingQueue = (await namespaceManager.QueueExistsAsync(forwardingQueue.Path))
+                ? await namespaceManager.UpdateQueueAsync(forwardingQueue)
+                : await namespaceManager.CreateQueueAsync(forwardingQueue);
 
 
-            /*
-            ** Close messaging factory and delete queues and topics.
-            */
+            var topicFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider("SendKey", this.sharedAccessRuleKey));
+            var topicSender = await topicFactory.CreateMessageSenderAsync(topic.Path);
+            await topicSender.SendAsync(CreateMessage("M1"));
+
+            var queueFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider("SendKey", this.sharedAccessRuleKey));
+            var queueSender = await queueFactory.CreateMessageSenderAsync(forwardingQueue.Path);
+            await queueSender.SendAsync(CreateMessage("M1"));
+
+
+            var messagingFactory = MessagingFactory.Create(namespaceAddress, namespaceManageTokenProvider);
+            var targetQueueReceiver = messagingFactory.CreateQueueClient(targetQueue.Path);
+            while (true)
+            {
+                var message = await targetQueueReceiver.ReceiveAsync(TimeSpan.FromSeconds(10));
+                if (message != null)
+                {
+                    await this.PrintReceivedMessage(message);
+                    await message.CompleteAsync();
+                }
+                else
+                {
+                    break;
+                }
+            }
+            await targetQueueReceiver.CloseAsync();
+
             Console.WriteLine("\nPress ENTER to delete topics and exit\n");
             Console.ReadLine();
-            namespaceManageMessagingFactory.Close();
-            namespaceManager.DeleteQueue(DestinationQueueName);
-            namespaceManager.DeleteQueue(TransferQueueName);
-            namespaceManager.DeleteTopic(SourceTopicName);
+            messagingFactory.Close();
+            Task.WaitAll(
+                namespaceManager.DeleteQueueAsync(targetQueue.Path),
+                namespaceManager.DeleteQueueAsync(forwardingQueue.Path),
+                namespaceManager.DeleteTopicAsync(topic.Path));
         }
 
+        async Task PrintReceivedMessage(BrokeredMessage receivedMessage)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            await Console.Out.WriteLineAsync(string.Format("Received message:\n" + "\tLabel:\t{0}\n" + "\tBody:\t{1}\n", receivedMessage.Label, receivedMessage.GetBody<string>()));
+            foreach (var p in receivedMessage.Properties)
+            {
+                await Console.Out.WriteLineAsync(string.Format("\tProperty:\t{0} = {1}", p.Key, p.Value));
+            }
+            Console.ResetColor();
+        }
+        
         // Create a new Service Bus message.
         public static BrokeredMessage CreateMessage(string label)
         {
@@ -175,19 +129,6 @@ namespace MessagingSamples
             msg.TimeToLive = TimeSpan.FromSeconds(90);
             return msg;
         }
-
-        // Print the Service Bus message.
-        public static void PrintMessage(BrokeredMessage msg)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Received message:");
-            Console.WriteLine("   Label:    " + msg.Label);
-            Console.WriteLine("   Body:     " + msg.GetBody<string>());
-            foreach (var p in msg.Properties)
-            {
-                Console.WriteLine("   Property: " + p.Key + " = " + p.Value);
-            }
-            Console.ForegroundColor = ConsoleColor.Gray;
-        }
+        
     }
 }
