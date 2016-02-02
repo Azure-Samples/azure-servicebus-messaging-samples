@@ -32,7 +32,7 @@ namespace MessagingSamples
             Console.WriteLine("Press any key to exit the scenario");
 
             var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken);
+            var receiveTask = this.PeekMessagesAsync(namespaceAddress, queueName, receiveToken);
 
             await Task.WhenAll(sendTask, receiveTask);
 
@@ -90,7 +90,7 @@ namespace MessagingSamples
             }
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
+        async Task PeekMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
         {
             var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
