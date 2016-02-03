@@ -128,7 +128,12 @@ async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, strin
 ``` 
      
 As you might expect, we'll now create a receiver object. Like with send, we could use the *QueueClient*, but we create a generic
-*MessageReceiver* that could also receive from a Topic Subscription when given the correct path. 
+*MessageReceiver* that could also receive from a Topic Subscription when given the correct path. Note that the reciver is created 
+with the *PeekLock* receive mode. This mode will pass the message to the receiver while the broker maintains a lock on 
+the message and hold on to the message. If the message has not been completed, deferred, deadlettered, or abandoned during the
+lock timeout period, the message will again appear in the queue (or the Topic Subscription) for retrieval. This is different 
+from the *ReceiveAndDelete* alternative where the message has been deleted as it arrives at the receiver. In this example, the 
+message is either completed or deadlettered as you will see further below.    
 
 ```C#
        var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
@@ -154,10 +159,12 @@ excessive network traffic when used in a loop.
 
 We use 5 seconds here to have the sample exit cleanly once the sample messages have been consumed and to show the timeout behavior.
   
-For a production receive loop, the more common strategy will be to call *Receive*/*ReceiveAsync* without a timeout argument and
-class *Close* on the *MessageReceiver* instance to terminate the receive loop. Doing so will return **null** from a pending receive, 
-and initiating a new receive operation will cause a *OperationCanceledException* to be thrown. Both cases should be handled as 
-termination condition ([see Alternate Loop section](#alternate-loop)).  
+For a production receive loop, the more common strategy will be to call *Receive*/*ReceiveAsync* without a timeout 
+argument, ([see Alternate Loop section](#alternate-loop)).
+
+If we have obntained a valid message, we'll first check whether it is a message that we can handle. For this example, we check 
+the Label and ContentType properties for whether they contain the expected values indiocating that we can successfully 
+decode and process the message body. If they do, we acquire the body stream and deserialize it:      
 
 ``` C#            
             if (message != null)
@@ -170,7 +177,21 @@ termination condition ([see Alternate Loop section](#alternate-loop)).
                     var body = message.GetBody<Stream>();
 
                     dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
+```
 
+Instead of processing the message, the sample code writes out the message properties to the console. Of particular interest are 
+those propertzies that the broker sets or modifies as the message passes through:
+
+* the *SequenceNumnber* property is a monotonically increasing and gapless sequence number assigned to each message 
+  as it is processed by the broker. The sequence number is authoritiative for determining order of arrival. For partitioned
+  entities, the lower 48 bits hold the per-partition sequence number, the upper 16 bits hold the partition number.           
+* the *EnqueuedTimeUtc* property reflects the time at which the message has been committed by the processing 
+  broker node. There may be clock skew from UTC and also between different broker nodes. If you need to determine order 
+  of arrival refer to the SequenceNumber.           
+* the *Size* property holds the size of the message body, in bytes.
+* the *ExpiredAtUtc* property holds the absolute instant at which this message will expire (EnqueuedTimeUtc+TimeToLive)  
+
+ ``` C#
                     lock (Console.Out)
                     {
                         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -187,6 +208,14 @@ termination condition ([see Alternate Loop section](#alternate-loop)).
                             scientist.name);
                         Console.ResetColor();
                     }
+```
+Now that we're done with "processing" the message, we tell the broker about that being the case. The *Complete(Async)* 
+operation will settle the message transfer with the broker and remove it from the broker. If the message does not 
+meet our processing criteria, we will deadletter it, meaning it is put into a special queue for handling defective
+messages. The broker will automatically deadletter the message if delivery has been attempted too many times. 
+You can find out more about this in the [Deadletter](../Deadletter) sample.
+
+``` C#                    
                     await message.CompleteAsync();
                 }
                 else
@@ -194,12 +223,24 @@ termination condition ([see Alternate Loop section](#alternate-loop)).
                     await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
                 }
             }
+``` 
+
+If the message has come back as **null** we break out of the loop.
+ 
+```C#            
             else
             {
                 //no more messages in the queue
                 break;
             }
         }
+```
+
+And finally, when any kind of messaging exception occurs and that exception is not transient, meaning things 
+will not get better if we retry the operation, then we "log" and rethrow for external handling. Otherwise we'll 
+absorb the exception (you might want to log it for monitoring purposes) and keep going.   
+
+```C#        
         catch (MessagingException e)
         {
             if (!e.IsTransient)
@@ -209,7 +250,6 @@ termination condition ([see Alternate Loop section](#alternate-loop)).
             }
         }
     }
-
 ``` 
 
 ###Alternate Loop
