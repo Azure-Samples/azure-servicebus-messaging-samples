@@ -28,18 +28,6 @@ namespace MessagingSamples
 
     public class Program : IBasicQueueSendReceiveSample
     {
-        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
-        {
-            Console.WriteLine("Press any key to exit the scenario");
-
-            var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken);
-            
-            await Task.WhenAll(sendTask, receiveTask);
-
-            Console.ReadKey();
-        }
-
         async Task SendMessagesAsync(string namespaceAddress, string queueName, string sendToken)
         {
             var senderFactory = MessagingFactory.Create(
@@ -49,13 +37,8 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
                 });
-            senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
             var sender = await senderFactory.CreateMessageSenderAsync(queueName);
-
-
-            Console.WriteLine("Sending messages to Queue...");
-
+            
             dynamic data = new[]
             {
                 new {name = "Einstein", firstName = "Albert"},
@@ -91,77 +74,84 @@ namespace MessagingSamples
             }
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
+        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken, CancellationToken cancellationToken)
         {
-            var receiverFactory = MessagingFactory.Create(
+           var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
                 new MessagingFactorySettings
                 {
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
                 });
-            receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
 
             var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
-            Console.WriteLine("Receiving message from Queue...");
-            while (true)
-            {
-                try
+
+            var doneReceiving = new TaskCompletionSource<bool>();
+            // close the receiver and factory when the CancellationToken fires 
+            cancellationToken.Register(
+                async () =>
                 {
-                    //receive messages from Queue
-                    var message = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
-                    if (message != null)
+                    await receiver.CloseAsync();
+                    await receiverFactory.CloseAsync();
+                    doneReceiving.SetResult(true);
+                });
+
+            // register the OnMessageAsync callback
+            receiver.OnMessageAsync(
+                async message =>
+                {
+                    if (message.Label != null &&
+                        message.ContentType != null &&
+                        message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
+                        message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (message.Label != null &&
-                            message.ContentType != null &&
-                            message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
-                            message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            var body = message.GetBody<Stream>();
+                        var body = message.GetBody<Stream>();
 
-                            dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
+                        dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
 
-                            lock (Console.Out)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Cyan;
-                                Console.WriteLine(
-                                    "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
-                                    "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
-                                    message.MessageId,
-                                    message.SequenceNumber,
-                                    message.EnqueuedTimeUtc,
-                                    message.ContentType,
-                                    message.Size,
-                                    message.ExpiresAtUtc,
-                                    scientist.firstName,
-                                    scientist.name);
-                                Console.ResetColor();
-                            }
-                            await message.CompleteAsync();
-                        }
-                        else
+                        lock (Console.Out)
                         {
-                            await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine(
+                                "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
+                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
+                                message.MessageId,
+                                message.SequenceNumber,
+                                message.EnqueuedTimeUtc,
+                                message.ContentType,
+                                message.Size,
+                                message.ExpiresAtUtc,
+                                scientist.firstName,
+                                scientist.name);
+                            Console.ResetColor();
                         }
+                        await message.CompleteAsync();
                     }
                     else
                     {
-                        //no more messages in the queue
-                        break;
+                        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
                     }
-                }
-                catch (MessagingException e)
-                {
-                    if (!e.IsTransient)
-                    {
-                        Console.WriteLine(e.Message);
-                        throw;
-                    }
-                }
-            }
-            await receiver.CloseAsync();
-            await receiverFactory.CloseAsync();
+                },
+                new OnMessageOptions {AutoComplete = false, MaxConcurrentCalls = 1});
+
+            await doneReceiving.Task;
+        }
+
+
+        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
+        {
+            Console.WriteLine("Press any key to exit the scenario");
+
+            var cts = new CancellationTokenSource();
+
+            var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
+            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken, cts.Token);
+
+            Console.ReadKey();
+            cts.Cancel();
+
+            await Task.WhenAll(sendTask, receiveTask);
         }
     }
 }

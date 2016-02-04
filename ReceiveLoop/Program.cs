@@ -32,15 +32,12 @@ namespace MessagingSamples
         {
             Console.WriteLine("Press any key to exit the scenario");
 
-            var cts = new CancellationTokenSource();
-
             var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken, cts.Token);
-           
-            Console.ReadKey();
-            cts.Cancel();
-
+            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken);
+            
             await Task.WhenAll(sendTask, receiveTask);
+
+            Console.ReadKey();
         }
 
         async Task SendMessagesAsync(string namespaceAddress, string queueName, string sendToken)
@@ -52,10 +49,11 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
                 });
-            senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
+     
             var sender = await senderFactory.CreateMessageSenderAsync(queueName);
 
+
+            Console.WriteLine("Sending messages to Queue...");
 
             dynamic data = new[]
             {
@@ -92,9 +90,8 @@ namespace MessagingSamples
             }
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken, CancellationToken cancellationToken)
+        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
         {
-            var doneReceiving = new TaskCompletionSource<bool>();
             var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
                 new MessagingFactorySettings
@@ -102,59 +99,67 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
                 });
-            receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
+   
             var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
-            // close the receiver and factory when the CancellationToken fires 
-            cancellationToken.Register(
-                async () =>
+            Console.WriteLine("Receiving message from Queue...");
+            while (true)
+            {
+                try
                 {
-                    await receiver.CloseAsync();
-                    await receiverFactory.CloseAsync();
-                    doneReceiving.SetResult(true);
-                });
-
-            // register the OnMessageAsync callback
-            receiver.OnMessageAsync(
-                async message =>
-                {
-                    if (message.Label != null &&
-                        message.ContentType != null &&
-                        message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
-                        message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
+                    //receive messages from Queue
+                    var message = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
+                    if (message != null)
                     {
-                        var body = message.GetBody<Stream>();
-
-                        dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
-
-                        lock (Console.Out)
+                        if (message.Label != null &&
+                            message.ContentType != null &&
+                            message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
+                            message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            Console.ForegroundColor = ConsoleColor.Cyan;
-                            Console.WriteLine(
-                                "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
-                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
-                                message.MessageId,
-                                message.SequenceNumber,
-                                message.EnqueuedTimeUtc,
-                                message.ContentType,
-                                message.Size,
-                                message.ExpiresAtUtc,
-                                scientist.firstName,
-                                scientist.name);
-                            Console.ResetColor();
+                            var body = message.GetBody<Stream>();
+
+                            dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
+
+                            lock (Console.Out)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Cyan;
+                                Console.WriteLine(
+                                    "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
+                                    "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
+                                    message.MessageId,
+                                    message.SequenceNumber,
+                                    message.EnqueuedTimeUtc,
+                                    message.ContentType,
+                                    message.Size,
+                                    message.ExpiresAtUtc,
+                                    scientist.firstName,
+                                    scientist.name);
+                                Console.ResetColor();
+                            }
+                            await message.CompleteAsync();
                         }
-                        await message.CompleteAsync();
+                        else
+                        {
+                            await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
+                        }
                     }
                     else
                     {
-                        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
+                        //no more messages in the queue
+                        break;
                     }
-                },
-                new OnMessageOptions {AutoComplete = false, MaxConcurrentCalls = 1});
-
-            await doneReceiving.Task;
+                }
+                catch (MessagingException e)
+                {
+                    if (!e.IsTransient)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
+                }
+            }
+            await receiver.CloseAsync();
+            await receiverFactory.CloseAsync();
         }
-
     }
 }
