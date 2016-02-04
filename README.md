@@ -66,8 +66,8 @@ model is strongly encouraged at all times as it yields significantly more effici
   
 ###Basic Message Handling
 
-* **OnMessage(Async) API** - [OnMessage](./OnMessage) shows how to use the callback-based OnMessage(Async) API, which provides a robust
-  receive loop for both Queues and Topic Subscriptions that automatically handles transient errors and processing exceptions.
+* **Receive Loop** - [ReceiveLoop](./ReceiveLoop) shows how to use an explicit receive loop instead of the recommended, callback-based 
+  OnMessage(Async) API used in the "getting started" sample.
 * **Message Prefetching** - The [Prefetch](./Prefetch) sample shows the difference between having "prefetch" turned on or off for the receiver. 
   Prefetch is a background receive operation that acquires messages into a buffer before the application itself calls *Receive* and therefore 
   optimizes and often accelerates the message flow.

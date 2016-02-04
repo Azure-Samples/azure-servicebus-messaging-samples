@@ -52,13 +52,22 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                 });
 
+          
+            // Run 1
             var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
-
+            receiver.PrefetchCount = 0;
             // Send and Receive messages with prefetch OFF
-            var timeTaken1 = await this.SendAndReceiveMessages(sender, receiver, 100, 0);
-
+            var timeTaken1 = await this.SendAndReceiveMessages(sender, receiver, 100);
+            
+            receiver.Close();
+            
+            // Run 2
+            receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
+            receiver.PrefetchCount = 10;
             // Send and Receive messages with prefetch ON
-            var timeTaken2 = await this.SendAndReceiveMessages(sender, receiver, 100, 10);
+            var timeTaken2 = await this.SendAndReceiveMessages(sender, receiver, 100);
+            
+            receiver.Close();
 
             // Calculate the time difference
             var timeDifference = timeTaken1 - timeTaken2;
@@ -74,7 +83,7 @@ namespace MessagingSamples
             receiverMessagingFactory.Close();
         }
 
-        async Task<long> SendAndReceiveMessages(MessageSender sender, MessageReceiver receiver, int messageCount, int prefetchCount)
+        async Task<long> SendAndReceiveMessages(MessageSender sender, MessageReceiver receiver, int messageCount)
         {
             // Now we can start sending messages.
             var rnd = new Random();
@@ -98,33 +107,33 @@ namespace MessagingSamples
 
             Console.WriteLine("Send completed");
 
-            // Set the prefetchCount on the receiver
-            receiver.PrefetchCount = prefetchCount;
-
             // Receive the messages
-            Console.WriteLine("Receiving messages from queue using prefetchCount = {0}", prefetchCount);
+            Console.WriteLine("Receiving messages...");
 
             // Start stopwatch
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(10));
-            while (receivedMessage != null)
+            var receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
+            while (receivedMessage != null )
             {
                 // here's where you'd do any work
 
                 // complete (roundtrips)
                 await receivedMessage.CompleteAsync();
-                
+
+                if (--messageCount <= 0)
+                    break;
+
                 // now get the next message
-                receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(10));
+                receivedMessage = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
             }
             // Stop the stopwatch
             stopWatch.Stop();
 
             Console.WriteLine("Receive completed");
 
-            var timeTaken = stopWatch.ElapsedMilliseconds - 10000; // discount the 10s wait on the empty queue
+            var timeTaken = stopWatch.ElapsedMilliseconds; 
             Console.WriteLine("Time to receive and complete all messages = {0} milliseconds", timeTaken);
 
             return timeTaken;
