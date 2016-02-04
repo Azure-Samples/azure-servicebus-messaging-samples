@@ -21,7 +21,7 @@ twice. It is quite possible that a message gets committed into the queue and ack
 be returned to the sender. Duplicate detection takes the doubt out of this situation by letting
 the sender re-send the same message and tossing out any duplicate copy.
 
-## Transactions  
+### Transactions  
 
 Duplicate detection is a key element in creating reliable business applications in environments,
 like the cloud, where the foundational assumptions for supporting distributed "atomic" transactions 
