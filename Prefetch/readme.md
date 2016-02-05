@@ -87,7 +87,7 @@ The application entry points are in [Main.cs](../common/Main.md), which is share
 reside in *Program.cs*, starting with *Run()*.
 
 You can build the sample from the command line with the [build.bat](build.bat) or [build.ps1](build.ps1) scripts. This assumes that you
-have the .NET Build tools in the path. You can also open up the [QueuesGettingStarted.sln](QueuesGettingStarted.sln) solution file with Visual Studio and build.
+have the .NET Build tools in the path. You can also open up the [Prefetch.sln](Prefetch.sln) solution file with Visual Studio and build.
 With either option, the NuGet package manager should download and install the **WindowsAzure.ServiceBus** package containing the
 Microsoft.ServiceBus.dll assembly, including dependencies.
 

@@ -231,7 +231,7 @@ decode and process the message body. If they do, we acquire the body stream and 
 Instead of processing the message, the sample code writes out the message properties to the console. Of particular interest are
 those properties that the broker sets or modifies as the message passes through:
 
-* the *SequenceNumnber* property is a monotonically increasing and gapless sequence number assigned to each message
+* the *SequenceNumber* property is a monotonically increasing and gapless sequence number assigned to each message
   as it is processed by the broker. The sequence number is authoritiative for determining order of arrival. For partitioned
   entities, the lower 48 bits hold the per-partition sequence number, the upper 16 bits hold the partition number.
 * the *EnqueuedTimeUtc* property reflects the time at which the message has been committed by the processing

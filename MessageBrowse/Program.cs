@@ -31,11 +31,9 @@ namespace MessagingSamples
         {
             Console.WriteLine("Press any key to exit the scenario");
 
-            var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-            var receiveTask = this.PeekMessagesAsync(namespaceAddress, queueName, receiveToken);
-
-            await Task.WhenAll(sendTask, receiveTask);
-
+            await this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
+            await this.PeekMessagesAsync(namespaceAddress, queueName, receiveToken);
+            
             Console.ReadKey();
         }
 
@@ -118,13 +116,15 @@ namespace MessagingSamples
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             Console.WriteLine(
                                 "\t\t\t\tMessage peeked: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
-                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ {6} ]",
+                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4}, \n\t\t\t\t\t\tState = {6}, "+
+                                "  \n\t\t\t\t\t\tContent: [ {7} ]",
                                 message.MessageId,
                                 message.SequenceNumber,
                                 message.EnqueuedTimeUtc,
                                 message.ContentType,
                                 message.Size,
                                 message.ExpiresAtUtc,
+                                message.State, 
                                 body);
                             Console.ResetColor();
                         }
