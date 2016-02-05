@@ -1,3 +1,19 @@
+# CAUTION! CAUTION! CAUTION!
+
+THIS REPOSITORY IS WORK IN PROGRESS (February 2016). 
+
+NOT ALL CODE IS VERIFIED TO BE WORKING CORRECTLY AND THE DOCUMENTATION CONTAINS ERRORS OR MAY NOT BE CURRENT.
+
+MORE THAN EVER: THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, 
+FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT. 
+
+> You're more than welcome to look over my shoulder and check things out, though
+>
+>   - Clemens
+
+
+
 #Azure Service Bus Messaging samples
 
 This repository contains the official set of samples for the Azure Service Bus Messaging service (Standard and Premium), illustrating all core 
