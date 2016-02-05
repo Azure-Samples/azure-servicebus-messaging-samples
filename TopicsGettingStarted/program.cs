@@ -19,121 +19,144 @@ namespace MessagingSamples
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
+    using Newtonsoft.Json;
 
     public class Program : IBasicTopicSendReceiveSample
     {
         public async Task Run(string namespaceAddress, string topicName, string sendToken, string receiveToken)
         {
-            Console.WriteLine("Press any key to start sending messages ...");
-            Console.ReadKey();
-            await this.SendMessages(namespaceAddress, topicName, sendToken);
-            Console.WriteLine("Press any key to start receiving messages that you just sent ...");
-            Console.ReadKey();
-            await this.ReceiveMessages(namespaceAddress, topicName, "Subscription1", receiveToken);
-            await this.ReceiveMessages(namespaceAddress, topicName, "Subscription2", receiveToken);
-            await this.ReceiveMessages(namespaceAddress, topicName, "Subscription3", receiveToken);
+            var cts = new CancellationTokenSource();
+
+            await this.SendMessagesAsync(namespaceAddress, topicName, sendToken);
+
+            var allReceives = Task.WhenAll(
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription1", receiveToken, cts.Token, ConsoleColor.Cyan),
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription2", receiveToken, cts.Token, ConsoleColor.Green),
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription3", receiveToken, cts.Token, ConsoleColor.Yellow));
             Console.WriteLine("\nEnd of scenario, press any key to exit.");
             Console.ReadKey();
+
+            cts.Cancel();
+            await allReceives;
         }
 
-        async Task SendMessages(string namespaceAddress, string topicName, string sendToken)
+        async Task SendMessagesAsync(string namespaceAddress, string topicName, string sendToken)
         {
             var senderFactory = MessagingFactory.Create(
-              namespaceAddress,
-              new MessagingFactorySettings
-              {
-                  TransportType = TransportType.Amqp,
-                  TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
-              });
-            senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
-            var sender = senderFactory.CreateTopicClient(topicName);
-
-            var messageList = new List<BrokeredMessage>
-            {
-                new BrokeredMessage("First message information"),
-                new BrokeredMessage("Second message information"),
-                new BrokeredMessage("Third message information")
-            };
-
-            Console.WriteLine("\nSending messages to topic...");
-
-
-            foreach (var message in messageList)
-            {
-                while (true)
-                {
-                    try
-                    {
-                        await sender.SendAsync(message);
-                    }
-                    catch (MessagingException e)
-                    {
-                        if (!e.IsTransient)
-                        {
-                            Console.WriteLine(e.Message);
-                            throw;
-                        }
-                    }
-                    Console.WriteLine("Message sent: Id = {0}, Body = {1}", message.MessageId, message.GetBody<string>());
-                    break;
-                }
-            }
-
-            await sender.CloseAsync();
-            await senderFactory.CloseAsync();
-        }
-
-        async Task ReceiveMessages(string namespaceAddress, string topicName, string subscriptionName, string receiveToken)
-        {
-            var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
                 new MessagingFactorySettings
                 {
                     TransportType = TransportType.Amqp,
-                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
+                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
                 });
-            receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
+            var sender = await senderFactory.CreateMessageSenderAsync(topicName);
 
-            var receiver = receiverFactory.CreateSubscriptionClient(topicName, subscriptionName, ReceiveMode.PeekLock);
-
-            BrokeredMessage message = null;
-            while (true)
+            dynamic data = new[]
             {
-                try
+                new {name = "Einstein", firstName = "Albert"},
+                new {name = "Heisenberg", firstName = "Werner"},
+                new {name = "Curie", firstName = "Marie"},
+                new {name = "Hawking", firstName = "Steven"},
+                new {name = "Newton", firstName = "Isaac"},
+                new {name = "Bohr", firstName = "Niels"},
+                new {name = "Faraday", firstName = "Michael"},
+                new {name = "Galilei", firstName = "Galileo"},
+                new {name = "Kepler", firstName = "Johannes"},
+                new {name = "Kopernikus", firstName = "Nikolaus"}
+            };
+
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data[i]))))
                 {
-                    //receive messages from Agent Subscription
-                    message = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
-                    if (message != null)
+                    ContentType = "application/json",
+                    Label = "Scientist",
+                    MessageId = i.ToString(),
+                    TimeToLive = TimeSpan.FromMinutes(2)
+                };
+
+                await sender.SendAsync(message);
+                lock (Console.Out)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Message sent: Id = {0}", message.MessageId);
+                    Console.ResetColor();
+                }
+            }
+        }
+
+        async Task ReceiveMessagesAsync(string namespaceAddress, string topicName, string subscriptionName, string receiveToken, CancellationToken cancellationToken, ConsoleColor color)
+        {
+            var receiverFactory = MessagingFactory.Create(
+                 namespaceAddress,
+                 new MessagingFactorySettings
+                 {
+                     TransportType = TransportType.Amqp,
+                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
+                 });
+
+           // var subscriptionPath = SubscriptionClient.FormatSubscriptionPath(topicName, subscriptionName);
+            //var receiver = await receiverFactory.CreateMessageReceiverAsync(subscriptionPath, ReceiveMode.PeekLock);
+
+            var receiver = receiverFactory.CreateSubscriptionClient(topicName, subscriptionName);
+
+
+            var doneReceiving = new TaskCompletionSource<bool>();
+            // close the receiver and factory when the CancellationToken fires 
+            cancellationToken.Register(
+                async () =>
+                {
+                    await receiver.CloseAsync();
+                    await receiverFactory.CloseAsync();
+                    doneReceiving.SetResult(true);
+                });
+
+            // register the OnMessageAsync callback
+            receiver.OnMessageAsync(
+                async message =>
+                {
+                    if (message.Label != null &&
+                        message.ContentType != null &&
+                        message.Label.Equals("Scientist", StringComparison.InvariantCultureIgnoreCase) &&
+                        message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        Console.WriteLine("\nReceiving message from {0}...", subscriptionName);
-                        Console.WriteLine("Message received: Id = {0}, Body = {1}", message.MessageId, message.GetBody<string>());
-                        // Further custom message processing could go here...
+                        var body = message.GetBody<Stream>();
+
+                        dynamic scientist = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
+
+                        lock (Console.Out)
+                        {
+                            Console.ForegroundColor = color;
+                            Console.WriteLine(
+                                "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
+                                "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
+                                message.MessageId,
+                                message.SequenceNumber,
+                                message.EnqueuedTimeUtc,
+                                message.ContentType,
+                                message.Size,
+                                message.ExpiresAtUtc,
+                                scientist.firstName,
+                                scientist.name);
+                            Console.ResetColor();
+                        }
                         await message.CompleteAsync();
                     }
                     else
                     {
-                        //no more messages in the subscription
-                        break;
+                        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
                     }
-                }
-                catch (MessagingException e)
-                {
-                    if (!e.IsTransient)
-                    {
-                        Console.WriteLine(e.Message);
-                        throw;
-                    }
-                }
-            }
+                },
+                new OnMessageOptions { AutoComplete = false, MaxConcurrentCalls = 1 });
 
-
-            await receiverFactory.CloseAsync();
-            await receiver.CloseAsync();
+            await doneReceiving.Task;
         }
 
     }
