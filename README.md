@@ -101,7 +101,7 @@ model is strongly encouraged at all times as it yields significantly more effici
   
 ### Partitioned Entities
 
-* **Partitioned Queues** - [PartitionedQueues](./PartionedQueues) are largely identical in handling to "regular" Queues (and are the default 
+* **Partitioned Queues** - [PartitionedQueues](./PartitionedQueues) are largely identical in handling to "regular" Queues (and are the default 
   option when creating new Queues via teh Azure Portal), but are more resilient against slowdowns in the backend storage system. 
   This sample illustrates some special considerations to keep in mind for partitioned queues.   
 

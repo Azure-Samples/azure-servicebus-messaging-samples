@@ -1,7 +1,7 @@
 #Introduction
 This sample demonstrates how an application that is temporarily disconnected from the network can continue to send messages to Service Bus. The durable message sender library stores all messages in a local MSMQ queue until connectivity is restored. At the same time, the library allows the application to send message to Service Bus as part of a distributed transaction.
 ##Building the Sample
-Install Windows Azure SDK 2.0 or later.
+Install Azure SDK 2.0 or later.
 Create a Service Bus namespace.
 Build the sample. Open the solution in Visual Studio 2010 or later, add your namespace name and SAS key, and press F6.
 To demonstrate the use of DTC, assign a valid SQL connection string to private const string SqlConnectionString in file Client.cs.

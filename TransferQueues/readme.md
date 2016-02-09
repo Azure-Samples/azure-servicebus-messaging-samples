@@ -1,10 +1,10 @@
 #Introduction
-This sample demonstrates how to use the Windows Azure Service Bus messaging features within a transaction scope in order to ensure batches of messaging operations are committed atomically. See the Service Bus documentation for more information about the Service Bus before exploring the samples.
+This sample demonstrates how to use the  Azure Service Bus messaging features within a transaction scope in order to ensure batches of messaging operations are committed atomically. See the Service Bus documentation for more information about the Service Bus before exploring the samples.
 
 This sample demonstrates: sending and completing messages within a transaction scope; committing and aborting transactions.
 
 ##Prerequisites
-If you haven't already done so, please read the release notes document that explains how to sign up for a Windows Azure account and how to configure your environment.
+If you haven't already done so, please read the release notes document that explains how to sign up for a Azure account and how to configure your environment.
 
 ##Sample Flow
 The sample flows in the following manner:

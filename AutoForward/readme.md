@@ -1,7 +1,7 @@
 #Introduction
 This sample demonstrates how to automatically forward messages from a queue, subscription, or deadletter queue into another queue or topic. It also demonstrates how to send a message into a queue or topic via a transfer queue.
 ##Building the Sample
-* Install Windows Azure SDK 2.3 or later.
+* Install Azure SDK 2.3 or later.
 * Create a Service Bus namespace.
 * In files Program.cs, replace strings serviceNamespace, sasKeyName and sasKey with the information of your namespace.
 * Build the sample. Open the solution in Visual Studio 2010 or later and press F6.

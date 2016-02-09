@@ -3,7 +3,7 @@
 #Message Sample Using WCF Services  
 
 
-This sample demonstrates how to use the Windows Azure Service Bus using the WCF service model.
+This sample demonstrates how to use the Azure Service Bus using the WCF service model.
 
 The sample shows the use of the WCF service model to perform non-session communication via a Service Bus queue. The sample demonstrates this using a Ping service scenario. In this scenario, different senders send messages to the Ping service. All the messages are processed by the service. The service creates only one instance and processes all the messages in the same instance.
 
@@ -14,14 +14,14 @@ The sample prompts for service namespace credentials for the purpose of creating
 ##Prerequisites
 
 
-If you haven't already done so, please read the release notes document that explains how to sign up for a Windows Azure account and how to configure your environment. 
+If you haven't already done so, please read the release notes document that explains how to sign up for a Azure account and how to configure your environment. 
  
 ##Configuring the Sample
 
 
 When the solution is opened in Visual Studio, update the <behaviors> and <client> sections in the App.config file of the PingClient project. Also, update the <behaviors> and <services> sections in the App.config file of the PingService project.
 
-The value for ‘issuerSecret’ should be available upon signup for a Windows Azure account and upon configuring your environment. Please read the release notes for details.
+The value for ‘issuerSecret’ should be available upon signup for a Azure account and upon configuring your environment. Please read the release notes for details.
 
 The value for ‘address’ in the <client> and <services> sections is a Service Bus Uri that points to the queue entity. The Uri should be of type sb://<ServiceBus Namespace>.servicebus.windows.net/PingQueue where the ‘PingQueue’ is the entity name. Note that the Uri scheme ‘sb’ is mandatory for all runtime operations such as send/receive.
 

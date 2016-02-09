@@ -48,13 +48,7 @@ own subscriptions and all values above 2 go into the third subscription.
                 );
 ```
 
-> **It is DISCOURAGED for applications to routinely set up and tear down topics and subscriptions as a part of regular message processing.**
->
-> Managing topics and subscriptions should be treated as a system (re-)configuration operation and therefore only executed when the 
-> application is being set up, removed, or reconfigured. This recommendation includes *all* operations on the *NamespaceManager*, 
-> including the *Queue/Topic/SubscriptionExists* and *GetQueue/Topic/Subscription* operations. These operations should specifically 
-> **NOT** be used to determine whether an entity exists before sending or receiving, which will throw an appropriate exception, or 
-> to determine availability of messages before attempting to receive them.  
+> **It is discouraged for applications to routinely set up and tear down topics and subscriptions as a part of regular message processing.**  
 
  Once the subscriptions are set up, we seed the topic with a 100 messages with random priorities:
  
