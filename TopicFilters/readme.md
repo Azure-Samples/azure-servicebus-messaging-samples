@@ -63,6 +63,7 @@ The sample code shows how to create subscriptions with filters using the Service
 and also shows the effects of those filters at runtime.
 
 > **It is DISCOURAGED for applications to routinely set up and tear down topics and subscriptions as a part of regular message processing.**
+>
 > Managing topics and subscriptions should be treated as a system (re-)configuration operation and therefore only executed when the 
 > application is being set up, removed, or reconfigured. This recommendation includes *all* operations on the *NamespaceManager*, 
 > including the *Queue/Topic/SubscriptionExists* and *GetQueue/Topic/Subscription* operations. These operations should specifically 
@@ -82,9 +83,7 @@ required to work with most operations on the *NamespaceManager* class.
 The sample first checks whether the topic still exists if it hasn't been cleaned up by an earlier run. If the topic exists
 we delete it, which also deletes all related subscriptions, so that we have a clean environment. An application would 
 typically *not* toss out existing entities and rather change them; you can see how to change rules on existing 
-subscriptions in the [SubscriptionRules](../SubscriptionRules) sample.  
-
-Then we create the topic:
+subscriptions in the [SubscriptionRules](../SubscriptionRules) sample. Then we create the topic:
 
 ```C#
      if (await namespaceManager.TopicExistsAsync(TopicName))

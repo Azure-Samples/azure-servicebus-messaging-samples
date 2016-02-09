@@ -1,5 +1,5 @@
 //   
-//   Copyright © Microsoft Corporation, All Rights Reserved
+//   Copyright ï¿½ Microsoft Corporation, All Rights Reserved
 // 
 //   Licensed under the Apache License, Version 2.0 (the "License"); 
 //   you may not use this file except in compliance with the License. 
@@ -24,8 +24,7 @@ namespace MessagingSamples
 
     public class Program : IDynamicSample
     {
-        const string TopicName = "MyTopic";
-        const string PropertyName = "Priority";
+        const string TopicName = "PrioritySubscriptionsTopic";
 
         readonly ConsoleColor[] colors =
         {
@@ -55,15 +54,15 @@ namespace MessagingSamples
                 // this sub receives messages for Priority = 1
                 namespaceManager.CreateSubscriptionAsync(
                     new SubscriptionDescription(TopicName, "Priority1Subscription"),
-                    new RuleDescription(new SqlFilter(PropertyName + " = 1"))),
+                    new RuleDescription(new SqlFilter("Priority = 1"))),
                 // this sub receives messages for Priority = 2
                 namespaceManager.CreateSubscriptionAsync(
                     new SubscriptionDescription(TopicName, "Priority2Subscription"),
-                    new RuleDescription(new SqlFilter(PropertyName + " = 2"))),
+                    new RuleDescription(new SqlFilter("Priority = 2"))),
                 // this sub receives messages for Priority Less than 2
                 namespaceManager.CreateSubscriptionAsync(
                     new SubscriptionDescription(TopicName, "PriorityLessThan2Subscription"),
-                    new RuleDescription(new SqlFilter(PropertyName + " > 2")))
+                    new RuleDescription(new SqlFilter("Priority > 2")))
                 );
 
 
@@ -85,10 +84,10 @@ namespace MessagingSamples
             {
                 var msg = new BrokeredMessage()
                 {
-                    MessageId = "Order_" + DateTime.Now.ToLongTimeString(),
+                    TimeToLive = TimeSpan.FromMinutes(2),
                     Properties =
                     {
-                        { PropertyName, rand.Next(1, 4) }
+                        { "Priority", rand.Next(1, 4) }
                     }
                 };
 
@@ -123,10 +122,11 @@ namespace MessagingSamples
             {
                 try
                 {
-                    var timeoutThreshold = TimeSpan.FromSeconds(2);
-                    var message = await subClient1.ReceiveAsync(timeoutThreshold) ??
-                                  (await subClient2.ReceiveAsync(timeoutThreshold) ?? 
-                                   await subClient3.ReceiveAsync(timeoutThreshold));
+                    // Please see the README.md file regarding this loop and 
+                    // the handling strategy below. 
+                    var message = await subClient1.ReceiveAsync(TimeSpan.Zero) ??
+                                  (await subClient2.ReceiveAsync(TimeSpan.Zero) ?? 
+                                   await subClient3.ReceiveAsync(TimeSpan.Zero));
 
                     if (message != null)
                     {
@@ -156,15 +156,11 @@ namespace MessagingSamples
 
         public void OutputMessageInfo(string action, BrokeredMessage message, string additionalText = "")
         {
-            if (message == null)
-            {
-                return;
-            }
-            var prop = message.Properties[PropertyName];
+            var prop = message?.Properties["Priority"];
             if (prop != null)
             {
-                Console.ForegroundColor = colors[int.Parse(prop.ToString()) % colors.Length];
-                Console.WriteLine("{0}{1} - Priority {2}. {3}", action, message.MessageId, message.Properties[PropertyName], additionalText);
+                Console.ForegroundColor = this.colors[int.Parse(prop.ToString()) % this.colors.Length];
+                Console.WriteLine("{0}{1} - Priority {2}. {3}", action, message.MessageId, message.Properties["Priority"], additionalText);
                 Console.ResetColor();
             }
         }
