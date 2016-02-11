@@ -114,7 +114,7 @@ namespace MessagingSamples
             var rootUri = new UriBuilder("http", hostName, -1, "/").ToString();
             var sbUri = new UriBuilder("sb", hostName, -1, "/").ToString();
 
-            var program = Activator.CreateInstance(typeof (Program));
+            var program = Activator.CreateInstance(typeof(Program));
 
             if (program is IDynamicSample)
             {
@@ -123,7 +123,11 @@ namespace MessagingSamples
                         "rootsamplemanage",
                         properties[servicebusManageKey])
                         .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IDynamicSample) program).Run(sbUri, token).GetAwaiter().GetResult();
+                ((IDynamicSample)program).Run(sbUri, token).GetAwaiter().GetResult();
+            }
+            else if (program is IDynamicSampleWithKeys)
+            {
+                ((IDynamicSampleWithKeys)program).Run(sbUri, "rootsamplemanage", properties[servicebusManageKey], "rootsamplesend", properties[servicebusSendKey], "rootsamplesend", properties[servicebusListenKey]).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueSendReceiveSample)
             {
@@ -141,7 +145,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IBasicQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueSendSample)
             {
@@ -154,7 +158,7 @@ namespace MessagingSamples
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IBasicQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueReceiveSample)
             {
@@ -166,7 +170,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IBasicQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IPartitionedQueueSendReceiveSample)
             {
@@ -227,7 +231,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((ISessionQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is ISessionQueueSendSample)
             {
@@ -240,7 +244,7 @@ namespace MessagingSamples
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((ISessionQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is ISessionQueueReceiveSample)
             {
@@ -252,7 +256,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((ISessionQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueSendReceiveSample)
             {
@@ -270,7 +274,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueSendSample)
             {
@@ -283,7 +287,7 @@ namespace MessagingSamples
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueReceiveSample)
             {
@@ -295,7 +299,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicSendReceiveSample)
             {
@@ -313,7 +317,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IBasicTopicSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicSendSample)
             {
@@ -326,7 +330,7 @@ namespace MessagingSamples
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IBasicTopicSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicReceiveSample)
             {
@@ -338,7 +342,7 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IBasicTopicReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
 
 
@@ -350,7 +354,7 @@ namespace MessagingSamples
                         "rootsamplemanage",
                         properties[servicebusManageKey]);
 
-                ((IConnectionStringSample) program).Run(connectionString).GetAwaiter().GetResult();
+                ((IConnectionStringSample)program).Run(connectionString).GetAwaiter().GetResult();
             }
             else if (program is IDualQueueSendReceiveSample)
             {
@@ -372,7 +376,30 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+            }
+
+            else if (program is IDualQueueSampleWithFullRights)
+            {
+                var entityName = "BasicQueue";
+                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+
+                var token1 =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplemanage",
+                        properties[servicebusSendKey])
+                        .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+
+                var entity2Name = "BasicQueue2";
+                var entity2Uri = new UriBuilder("http", hostName, -1, entity2Name).ToString();
+
+                var token2 =
+                    TokenProvider.CreateSharedAccessSignatureTokenProvider(
+                        "samplemanage",
+                        properties[servicebusListenKey])
+                        .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
+
+                ((IDualQueueSampleWithFullRights)program).Run(sbUri, entityName, token1, entity2Name, token2).GetAwaiter().GetResult();
             }
 
             else if (program is IDualQueueSendReceiveFlipsideSample)
@@ -395,11 +422,11 @@ namespace MessagingSamples
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveFlipsideSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveFlipsideSample)program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDualBasicQueueSampleWithKeys)
             {
-                ((IDualBasicQueueSampleWithKeys) program).Run(
+                ((IDualBasicQueueSampleWithKeys)program).Run(
                     sbUri,
                     "BasicQueue",
                     "BasicQueue2",
@@ -516,9 +543,19 @@ namespace MessagingSamples
         Task Run(string namespaceAddress, string manageToken);
     }
 
+    interface IDynamicSampleWithKeys
+    {
+        Task Run(string namespaceAddress, string manageKeyName, string manageKey, string sendKeyName, string sendKey, string receiveKeyName, string receiveKey);
+    }
+
     interface IDualQueueSendReceiveSample
     {
         Task Run(string namespaceAddress, string sendQueueName, string sendToken, string receiveQueueName, string receiveToken);
+    }
+
+    interface IDualQueueSampleWithFullRights
+    {
+        Task Run(string namespaceAddress, string queueName1, string manageToken1, string queueName2, string manageToken2);
     }
 
     interface IDualQueueSendReceiveFlipsideSample

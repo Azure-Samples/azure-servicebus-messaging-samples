@@ -47,14 +47,17 @@ $startTime = Get-Date
 
 if ( $SendKey -eq $null -Or $SendKey.StartsWith("{") ) { $SendKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() }
 if ( $ListenKey -eq $null -Or $ListenKey.StartsWith("{") ) { $ListenKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() } 
+if ( $SendListenKey -eq $null -Or $SendListenKey.StartsWith("{") ) { $SendListenKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() } 
 if ( $ManageKey -eq $null -Or $ManageKey.StartsWith("{") ) { $ManageKey = [Microsoft.ServiceBus.Messaging.SharedAccessAuthorizationRule]::GenerateRandomKey() }
 
 $SendRuleName = "samplesend"
 $ListenRuleName = "samplelisten"
+$SendListenRuleName = "samplesendlisten"
 $ManageRuleName = "samplemanage"
 
 $SendAccessRights = [Microsoft.ServiceBus.Messaging.AccessRights[]]([Microsoft.ServiceBus.Messaging.AccessRights]::Send)
 $ListenAccessRights = [Microsoft.ServiceBus.Messaging.AccessRights[]]([Microsoft.ServiceBus.Messaging.AccessRights]::Listen)
+$SendListenAccessRights = [Microsoft.ServiceBus.Messaging.AccessRights[]]([Microsoft.ServiceBus.Messaging.AccessRights]::Send,[Microsoft.ServiceBus.Messaging.AccessRights]::Listen)
 $ManageAccessRights = [Microsoft.ServiceBus.Messaging.AccessRights[]]([Microsoft.ServiceBus.Messaging.AccessRights]::Manage,[Microsoft.ServiceBus.Messaging.AccessRights]::Send,[Microsoft.ServiceBus.Messaging.AccessRights]::Listen)
 
 
@@ -65,6 +68,12 @@ $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
 if ($CurrentNamespace)
 {
     Write-InfoLog "The namespace: $Namespace already exists in location: $($CurrentNamespace.Region)" (Get-ScriptName) (Get-ScriptLineNumber)
+	$ErrorActionPreference = "SilentlyContinue"
+	$null = Remove-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace 
+	$null = Remove-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace 
+	$null = Remove-AzureSBAuthorizationRule -Name "root$SendListenRuleName" -Namespace $Namespace 
+	$null = Remove-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace 
+	$ErrorActionPreference = "Stop"
 }
 else
 {
@@ -72,14 +81,17 @@ else
     Write-InfoLog "Creating namespace: $Namespace in location: $Location" (Get-ScriptName) (Get-ScriptLineNumber)
     $CurrentNamespace = New-AzureSBNamespace -Name $Namespace -Location $Location -CreateACSNamespace $CreateACSNamespace -NamespaceType Messaging
     #introduce a delay so that the namespace info can be retrieved
-    sleep -s 15
+    sleep -s 30
     $CurrentNamespace = Get-AzureSBNamespace -Name $Namespace
     Write-InfoLog "The namespace: $Namespace in location: $Location has been successfully created." (Get-ScriptName) (Get-ScriptLineNumber)
-    
-    $null = New-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace -Permission $("Send") -PrimaryKey $SendKey
-    $null = New-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace -Permission $("Listen") -PrimaryKey $ListenKey
-    $null = New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
 }
+$null = New-AzureSBAuthorizationRule -Name "root$SendRuleName" -Namespace $Namespace -Permission $("Send") -PrimaryKey $SendKey
+$null = New-AzureSBAuthorizationRule -Name "root$ListenRuleName" -Namespace $Namespace -Permission $("Listen") -PrimaryKey $ListenKey
+$null = New-AzureSBAuthorizationRule -Name "root$SendListenRuleName" -Namespace $Namespace -Permission $("Send", "Listen") -PrimaryKey $SendListenKey
+$null = New-AzureSBAuthorizationRule -Name "root$ManageRuleName" -Namespace $Namespace -Permission $("Manage", "Listen","Send") -PrimaryKey $ManageKey
+
+
+
 
 # Create the NamespaceManager object
 Write-InfoLog "Creating a NamespaceManager object for the namespace: $Namespace" (Get-ScriptName) (Get-ScriptLineNumber)
@@ -257,6 +269,7 @@ Write-InfoLog "CreateRelays completed in $totalSeconds seconds." (Get-ScriptName
 $keys = @{
   "$SendRuleName" = "$SendKey";
   "$ListenRuleName" = "$ListenKey";
+  "$SendListenRuleName" = "$SendListenKey";
   "$ManageRuleName" = "$ManageKey";
 }
 

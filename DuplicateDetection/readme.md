@@ -38,8 +38,8 @@ option for (scalable) cloud solutions.
 Since applications do need such composite operations and consistent outcomes, what do we do?
 
 A Service Bus Queue is a great start to communicate "jobs" that must be executed reliably. The 
-queue consumer picks up the job input, performs the desired work, and reports the outcome. If anything 
-happens during execution of the work, including an outright crash, the message lock will eventually
+queue consumer picks up the job input, performs the desired work, and reports th>e outcome. If anything 
+happens during execution of the work, including an outright crash, the message l>ock will eventually
 expire, and the job will be picked up again and can again be executed.
 
 Many cloud resources, like storage or databases have some notion of batch commits or local 
@@ -77,9 +77,9 @@ You can configure the size of the duplicate detection window during which messag
 retained with the expressively named [QueueDescription.DuplicateDetectionHistoryTimeWindow](https://msdn.microsoft.com/en-us/library/azure/microsoft.servicebus.messaging.queuedescription.duplicatedetectionhistorytimewindow.aspx) property. The default
 value is 10 minutes. 
 
-Mind that the enabling duplicate detection and size of the window will directly impacts a queues' (and a topic's) throughgput.
-Keeping the window small, means that fewer message-ids must be retained and matched and throughput is impacted less. For 
-high throughput entities that require duplicate detection, you should keep the window as small as feasible for the use-case.     
+> Mind that the enabling duplicate detection and size of the window will directly impacts a queue's (and a topic's) throughgput.
+> Keeping the window small, means that fewer message-ids must be retained and matched and throughput is impacted less. For 
+> high throughput entities that require duplicate detection, you should keep the window as small as feasible for the use-case.     
    
 ## Prerequisites and Setup
 
