@@ -79,15 +79,15 @@ namespace MessagingSamples
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Something went wrong"},
+                                        {"TransactionError", "Failed to perform flight reservation"},
                                         {"Via", via}
                                     });
                             }
                             else
                             {
-                                // every operation executed in the 5 secs of any minute 
+                                // every operation executed in the first 3 secs of any minute 
                                 // tanks completely (simulates some local or external unexpected issue) 
-                                if (DateTime.UtcNow.Second <= 5)
+                                if (DateTime.UtcNow.Second <= 3)
                                 {
                                     throw new Exception("O_o");
                                 }
@@ -165,15 +165,15 @@ namespace MessagingSamples
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Something went wrong"},
+                                        {"TransactionError", "Failed to perform hotel reservation"},
                                         {"Via", via}
                                     });
                             }
                             else
                             {
-                                // every operation executed in the 5 secs of any minute 
+                                // every operation executed in the first 3 secs of any minute 
                                 // tanks completely (simulates some local or external unexpected issue) 
-                                if (DateTime.UtcNow.Second <= 5)
+                                if (DateTime.UtcNow.Second <= 3)
                                 {
                                     throw new Exception("O_o");
                                 }
@@ -251,15 +251,15 @@ namespace MessagingSamples
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Something went wrong"},
+                                        {"TransactionError", "Failred to perform rental car reservation"},
                                         {"Via", via}
                                     });
                             }
                             else
                             {
-                                // every operation executed in the 5 secs of any minute 
+                                // every operation executed in the first 3 secs of any minute 
                                 // tanks completely (simulates some local or external unexpected issue) 
-                                if (DateTime.UtcNow.Second <= 5)
+                                if (DateTime.UtcNow.Second <= 3)
                                 {
                                     throw new Exception("O_o");
                                 }
@@ -326,7 +326,7 @@ namespace MessagingSamples
                             }
 
                             // undo the reservation (or pretend to fail)
-                            if (DateTime.UtcNow.Second <= 5)
+                            if (DateTime.UtcNow.Second <= 3)
                             {
                                 throw new Exception("O_o");
                             }
@@ -390,7 +390,7 @@ namespace MessagingSamples
                             travelBooking.hotel.reservationId != null)
                         {
                             // undo the reservation (or pretend to fail)
-                            if (DateTime.UtcNow.Second <= 5)
+                            if (DateTime.UtcNow.Second <= 3)
                             {
                                 throw new Exception("O_o");
                             }
@@ -470,7 +470,7 @@ namespace MessagingSamples
                             }
 
                             // undo the reservation (or pretend to fail)
-                            if (DateTime.UtcNow.Second <= 5)
+                            if (DateTime.UtcNow.Second <= 3)
                             {
                                 throw new Exception("O_o");
                             }

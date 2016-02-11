@@ -79,80 +79,111 @@ namespace MessagingSamples
                 namespaceAddress,
                 TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey));
 
-            var queues = await this.SetupTopologyAsync(namespaceManager);
+            var queues = await this.SetupSagaTopologyAsync(namespaceManager);
+            await RunScenarioAsync(namespaceAddress, manageKeyName, manageKey);
+            await this.CleanupSagaTopologyAsync(namespaceManager, queues);
+        }
 
+        static async Task RunScenarioAsync(string namespaceAddress, string manageKeyName, string manageKey)
+        {
             var workersMessagingFactory = await MessagingFactory.CreateAsync(
                 namespaceAddress,
                 TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
-
-            var terminator = new CancellationTokenSource();
-            var saga = RunSaga(workersMessagingFactory, terminator);
-
             var receiverMessagingFactory = await MessagingFactory.CreateAsync(
-                namespaceAddress,
-                TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
-
-            // this receiver reads from the results queue and prints out the message
-            var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(SagaResultQueueName);
-            receiver.OnMessage(
-                m =>
-                {
-                    lock (Console.Out)
-                    {
-                        Console.ForegroundColor = m.Properties.ContainsKey("TransactionError") ? ConsoleColor.Magenta : ConsoleColor.Yellow;
-                        foreach (var prop in m.Properties)
-                        {
-                            Console.Write("{0}={1},", prop.Key, prop.Value);
-                        }
-                        Console.WriteLine(
-                            "\n{0}\nPending: {1}",
-                             new StreamReader(m.GetBody<Stream>(), true).ReadToEnd(),
-                            Interlocked.Decrement(ref pendingTransactions));
-                        Console.ResetColor();
-                    }
-                },
-                new OnMessageOptions { AutoComplete = true });
-
-            // and now we'll send some booking requests
+              namespaceAddress,
+              TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
             var senderMessagingFactory = await MessagingFactory.CreateAsync(
                 namespaceAddress,
                 TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
-            var sender = await senderMessagingFactory.CreateMessageSenderAsync(SagaInputQueueName);
 
-            dynamic bookingRequests = new[]
+            var resultsReceiver = await RunResultsReceiver(receiverMessagingFactory);
+
+            var sagaTerminator = new CancellationTokenSource();
+            var saga = RunSaga(workersMessagingFactory, sagaTerminator);
+
+            await SendBookingRequests(senderMessagingFactory);
+
+            Console.ReadKey();
+            sagaTerminator.Cancel();
+            await saga.Task;
+
+            resultsReceiver.Close();
+            senderMessagingFactory.Close();
+            receiverMessagingFactory.Close();
+            workersMessagingFactory.Close();
+
+        }
+
+        static async Task<MessageReceiver> RunResultsReceiver(MessagingFactory receiverMessagingFactory)
+        {
+            // this receiver reads from the results queue and prints out the message
+            var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(SagaResultQueueName);
+            receiver.OnMessage(PrintResultMessage, new OnMessageOptions { AutoComplete = true });
+            return receiver;
+        }
+
+        static async Task SendBookingRequests(MessagingFactory senderMessagingFactory)
+        {
+            // and now we'll send some booking requests
+            dynamic bookingRequests = new dynamic[]
             {
                 new
                 {
-                    flight = new {
+                    flight = new
+                    {
                         bookingClass = "C",
-                        legs = new[] {
-                            new {flightNo = "XB937", from = "DUS", to = "LHR", date="2017-08-01",},
-                            new {flightNo = "XB49", from = "LHR", to = "SEA", date="2017-08-01",},
-                            new {flightNo = "XB48", from = "SEA", to = "LHR", date="2017-08-10",},
-                            new {flightNo = "XB940", from = "LHR", to = "DUS", date="2017-08-11",},
+                        legs = new[]
+                        {
+                            new {flightNo = "XB937", from = "DUS", to = "LHR", date = "2017-08-01",},
+                            new {flightNo = "XB49", from = "LHR", to = "SEA", date = "2017-08-01",},
+                            new {flightNo = "XB48", from = "SEA", to = "LHR", date = "2017-08-10",},
+                            new {flightNo = "XB940", from = "LHR", to = "DUS", date = "2017-08-11",},
                         }
                     },
-                    hotel = new {name = "Hopeman", city = "Kirkland", state = "WA", checkin="2017-08-01", checkout = "2017-08-10"},
-                    car = new {vendor = "Hervis", airport = "SEA", from="2017-08-01T17:00", until="2017-08-10:17:00"}
+                    hotel = new {name = "Hopeman", city = "Kirkland", state = "WA", checkin = "2017-08-01", checkout = "2017-08-10"},
+                    car = new {vendor = "Hervis", airport = "SEA", from = "2017-08-01T17:00", until = "2017-08-10:17:00"}
                 },
-                 new
+                new
                 {
-                    flight = new {
+                    flight = new
+                    {
                         bookingClass = "C",
-                        legs = new[] {
-                            new {flightNo = "XL75", from = "DUS", to = "FRA", date="2017-08-01",},
-                            new {flightNo = "XL490", from = "FRA", to = "SEA", date="2017-08-01",},
-                            new {flightNo = "XL491", from = "SEA", to = "FRA", date="2017-08-10",},
-                            new {flightNo = "XL78", from = "FRA", to = "DUS", date="2017-08-11",},
+                        legs = new[]
+                        {
+                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01",},
+                            new {flightNo = "XL490", from = "FRA", to = "SEA", date = "2017-08-01",},
+                            new {flightNo = "XL491", from = "SEA", to = "FRA", date = "2017-08-10",},
+                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11",},
                         }
                     },
-                    hotel = new {name = "Eastin", city = "Bellevue", state = "WA", checkin="2017-08-01", checkout = "2017-08-10"},
-                    car = new {vendor = "Avional", airport = "SEA", from="2017-08-01T17:00", until="2017-08-10:17:00"}
+                    hotel = new {name = "Eastin", city = "Bellevue", state = "WA", checkin = "2017-08-01", checkout = "2017-08-10"},
+                    car = new {vendor = "Avional", airport = "SEA", from = "2017-08-01T17:00", until = "2017-08-10:17:00"}
+                },
+                new
+                {
+                    hotel = new {name = "Eastin", city = "Bellevue", state = "WA", checkin = "2017-08-01", checkout = "2017-08-10"}
+                },
+                new
+                {
+                    flight = new
+                    {
+                        bookingClass = "Y",
+                        legs = new[]
+                        {
+                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01",},
+                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11",},
+                        }
+                    }
+                },
+                new
+                {
+                    car = new {vendor = "Hext", airport = "DUS", from = "2017-08-01T17:00", until = "2017-08-10:17:00"}
                 }
             };
 
             Console.WriteLine("Sending requests");
-            for (int j = 0; j < 50; j++)
+            var sender = await senderMessagingFactory.CreateMessageSenderAsync(SagaInputQueueName);
+            for (int j = 0; j < 5; j++)
             {
                 for (int i = 0; i < bookingRequests.Length; i++)
                 {
@@ -167,15 +198,8 @@ namespace MessagingSamples
                     Interlocked.Increment(ref pendingTransactions);
                 }
             }
-
-            Console.ReadKey();
-            terminator.Cancel();
-            await saga.Task;
-
-            receiver.Close();
-
-            await this.CleanupTopologyAsync(namespaceManager, queues);
         }
+
 
         static SagaTaskManager RunSaga(MessagingFactory workersMessageFactory, CancellationTokenSource terminator)
         {
@@ -191,7 +215,7 @@ namespace MessagingSamples
             return saga;
         }
 
-        async Task<IEnumerable<QueueDescription>> SetupTopologyAsync(NamespaceManager nm)
+        async Task<IEnumerable<QueueDescription>> SetupSagaTopologyAsync(NamespaceManager nm)
         {
             Console.WriteLine("Setup");
             return new List<QueueDescription>()
@@ -240,7 +264,7 @@ namespace MessagingSamples
                     })};
         }
 
-        async Task CleanupTopologyAsync(NamespaceManager namespaceManager, IEnumerable<QueueDescription> queues)
+        async Task CleanupSagaTopologyAsync(NamespaceManager namespaceManager, IEnumerable<QueueDescription> queues)
         {
             Console.WriteLine("Cleanup");
             foreach (var queueDescription in queues.Reverse())
@@ -248,5 +272,25 @@ namespace MessagingSamples
                 await namespaceManager.DeleteQueueAsync(queueDescription.Path);
             }
         }
+
+        static void PrintResultMessage(BrokeredMessage m)
+        {
+            lock (Console.Out)
+            {
+                Console.ForegroundColor = m.Properties.ContainsKey("TransactionError") || m.Properties.ContainsKey("DeadLetterReason")
+                    ? ConsoleColor.Magenta
+                    : ConsoleColor.Yellow;
+                foreach (var prop in m.Properties)
+                {
+                    Console.WriteLine("{0}={1},", prop.Key, prop.Value);
+                }
+                Console.WriteLine(
+                    "{0}\nPending: {1}",
+                    new StreamReader(m.GetBody<Stream>(), true).ReadToEnd(),
+                    Interlocked.Decrement(ref pendingTransactions));
+                Console.ResetColor();
+            }
+        }
+
     }
 }
