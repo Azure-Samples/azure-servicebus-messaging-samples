@@ -30,8 +30,6 @@ namespace MessagingSamples
 
     public class Program : IDynamicSampleWithKeys
     {
-        static int pendingTransactions = 0;
-
         const string SagaQueuePathPrefix = "sagas/1";
         const string BookRentalCarQueueName = SagaQueuePathPrefix + "/Ta";
         const string CancelRentalCarQueueName = SagaQueuePathPrefix + "/Ca";
@@ -41,6 +39,7 @@ namespace MessagingSamples
         const string CancelFlightQueueName = SagaQueuePathPrefix + "/Cc";
         const string SagaResultQueueName = SagaQueuePathPrefix + "/result";
         const string SagaInputQueueName = SagaQueuePathPrefix + "/input";
+        static int pendingTransactions;
 
         public async Task Run(
             string namespaceAddress,
@@ -51,8 +50,6 @@ namespace MessagingSamples
             string receiveKeyName,
             string receiveKey)
         {
-
-
             // we're going to create a topology for sagas of sequential transactions in this 
             // sample. For each transactional saga step we will have a dedicated input queue. 
 
@@ -90,8 +87,8 @@ namespace MessagingSamples
                 namespaceAddress,
                 TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
             var receiverMessagingFactory = await MessagingFactory.CreateAsync(
-              namespaceAddress,
-              TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
+                namespaceAddress,
+                TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
             var senderMessagingFactory = await MessagingFactory.CreateAsync(
                 namespaceAddress,
                 TokenProvider.CreateSharedAccessSignatureTokenProvider(manageKeyName, manageKey)); // make the token
@@ -111,14 +108,13 @@ namespace MessagingSamples
             senderMessagingFactory.Close();
             receiverMessagingFactory.Close();
             workersMessagingFactory.Close();
-
         }
 
         static async Task<MessageReceiver> RunResultsReceiver(MessagingFactory receiverMessagingFactory)
         {
             // this receiver reads from the results queue and prints out the message
             var receiver = await receiverMessagingFactory.CreateMessageReceiverAsync(SagaResultQueueName);
-            receiver.OnMessage(PrintResultMessage, new OnMessageOptions { AutoComplete = true });
+            receiver.OnMessage(PrintResultMessage, new OnMessageOptions {AutoComplete = true});
             return receiver;
         }
 
@@ -134,10 +130,10 @@ namespace MessagingSamples
                         bookingClass = "C",
                         legs = new[]
                         {
-                            new {flightNo = "XB937", from = "DUS", to = "LHR", date = "2017-08-01",},
-                            new {flightNo = "XB49", from = "LHR", to = "SEA", date = "2017-08-01",},
-                            new {flightNo = "XB48", from = "SEA", to = "LHR", date = "2017-08-10",},
-                            new {flightNo = "XB940", from = "LHR", to = "DUS", date = "2017-08-11",},
+                            new {flightNo = "XB937", from = "DUS", to = "LHR", date = "2017-08-01"},
+                            new {flightNo = "XB49", from = "LHR", to = "SEA", date = "2017-08-01"},
+                            new {flightNo = "XB48", from = "SEA", to = "LHR", date = "2017-08-10"},
+                            new {flightNo = "XB940", from = "LHR", to = "DUS", date = "2017-08-11"}
                         }
                     },
                     hotel = new {name = "Hopeman", city = "Kirkland", state = "WA", checkin = "2017-08-01", checkout = "2017-08-10"},
@@ -150,10 +146,10 @@ namespace MessagingSamples
                         bookingClass = "C",
                         legs = new[]
                         {
-                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01",},
-                            new {flightNo = "XL490", from = "FRA", to = "SEA", date = "2017-08-01",},
-                            new {flightNo = "XL491", from = "SEA", to = "FRA", date = "2017-08-10",},
-                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11",},
+                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01"},
+                            new {flightNo = "XL490", from = "FRA", to = "SEA", date = "2017-08-01"},
+                            new {flightNo = "XL491", from = "SEA", to = "FRA", date = "2017-08-10"},
+                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11"}
                         }
                     },
                     hotel = new {name = "Eastin", city = "Bellevue", state = "WA", checkin = "2017-08-01", checkout = "2017-08-10"},
@@ -170,8 +166,8 @@ namespace MessagingSamples
                         bookingClass = "Y",
                         legs = new[]
                         {
-                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01",},
-                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11",},
+                            new {flightNo = "XL75", from = "DUS", to = "FRA", date = "2017-08-01"},
+                            new {flightNo = "XL78", from = "FRA", to = "DUS", date = "2017-08-11"}
                         }
                     }
                 },
@@ -200,7 +196,6 @@ namespace MessagingSamples
             }
         }
 
-
         static SagaTaskManager RunSaga(MessagingFactory workersMessageFactory, CancellationTokenSource terminator)
         {
             var saga = new SagaTaskManager(workersMessageFactory, terminator.Token)
@@ -218,25 +213,30 @@ namespace MessagingSamples
         async Task<IEnumerable<QueueDescription>> SetupSagaTopologyAsync(NamespaceManager nm)
         {
             Console.WriteLine("Setup");
-            return new List<QueueDescription>()
+            return new List<QueueDescription>
             {
-                await nm.QueueExistsAsync(SagaResultQueueName)?await nm.GetQueueAsync(SagaResultQueueName):
-                    await nm.CreateQueueAsync(SagaResultQueueName),
-                await nm.QueueExistsAsync(CancelFlightQueueName)?await nm.GetQueueAsync(CancelFlightQueueName):
-                    await nm.CreateQueueAsync(new QueueDescription(CancelFlightQueueName)),
-                await nm.QueueExistsAsync(BookFlightQueueName)?await nm.GetQueueAsync(BookFlightQueueName):
-                    await nm.CreateQueueAsync(
-                    new QueueDescription(BookFlightQueueName)
-                    {
-                        // on failure, we move deadletter messages off to the flight 
-                        // booking compensator's queue
-                        EnableDeadLetteringOnMessageExpiration = true,
-                        ForwardDeadLetteredMessagesTo = CancelFlightQueueName
-                    }),
-                await nm.QueueExistsAsync(CancelHotelQueueName)?await nm.GetQueueAsync(CancelHotelQueueName):
-                    await nm.CreateQueueAsync(new QueueDescription(CancelHotelQueueName)),
-                await nm.QueueExistsAsync(BookHotelQueueName)?await nm.GetQueueAsync(BookHotelQueueName):
-                    await nm.CreateQueueAsync(
+                await nm.QueueExistsAsync(SagaResultQueueName)
+                    ? await nm.GetQueueAsync(SagaResultQueueName)
+                    : await nm.CreateQueueAsync(SagaResultQueueName),
+                await nm.QueueExistsAsync(CancelFlightQueueName)
+                    ? await nm.GetQueueAsync(CancelFlightQueueName)
+                    : await nm.CreateQueueAsync(new QueueDescription(CancelFlightQueueName)),
+                await nm.QueueExistsAsync(BookFlightQueueName)
+                    ? await nm.GetQueueAsync(BookFlightQueueName)
+                    : await nm.CreateQueueAsync(
+                        new QueueDescription(BookFlightQueueName)
+                        {
+                            // on failure, we move deadletter messages off to the flight 
+                            // booking compensator's queue
+                            EnableDeadLetteringOnMessageExpiration = true,
+                            ForwardDeadLetteredMessagesTo = CancelFlightQueueName
+                        }),
+                await nm.QueueExistsAsync(CancelHotelQueueName)
+                    ? await nm.GetQueueAsync(CancelHotelQueueName)
+                    : await nm.CreateQueueAsync(new QueueDescription(CancelHotelQueueName)),
+                await nm.QueueExistsAsync(BookHotelQueueName)
+                    ? await nm.GetQueueAsync(BookHotelQueueName)
+                    : await nm.CreateQueueAsync(
                         new QueueDescription(BookHotelQueueName)
                         {
                             // on failure, we move deadletter messages off to the hotel 
@@ -244,24 +244,28 @@ namespace MessagingSamples
                             EnableDeadLetteringOnMessageExpiration = true,
                             ForwardDeadLetteredMessagesTo = CancelHotelQueueName
                         }),
-                await nm.QueueExistsAsync(CancelRentalCarQueueName)?await nm.GetQueueAsync(CancelRentalCarQueueName):
-                    await nm.CreateQueueAsync(new QueueDescription(CancelRentalCarQueueName)),
-                await nm.QueueExistsAsync(BookRentalCarQueueName)?await nm.GetQueueAsync(BookRentalCarQueueName):
-                    await nm.CreateQueueAsync(
-                    new QueueDescription(BookRentalCarQueueName)
-                    {
-                        // on failure, we move deadletter messages off to the car rental 
-                        // compensator's queue
-                        EnableDeadLetteringOnMessageExpiration = true,
-                        ForwardDeadLetteredMessagesTo = CancelRentalCarQueueName
-                    }),
-                await nm.QueueExistsAsync(SagaInputQueueName)?await nm.GetQueueAsync(SagaInputQueueName):
-                    await nm.CreateQueueAsync(
-                    new QueueDescription(SagaInputQueueName)
-                    {
-                        // book car is the first step
-                        ForwardTo = BookRentalCarQueueName
-                    })};
+                await nm.QueueExistsAsync(CancelRentalCarQueueName)
+                    ? await nm.GetQueueAsync(CancelRentalCarQueueName)
+                    : await nm.CreateQueueAsync(new QueueDescription(CancelRentalCarQueueName)),
+                await nm.QueueExistsAsync(BookRentalCarQueueName)
+                    ? await nm.GetQueueAsync(BookRentalCarQueueName)
+                    : await nm.CreateQueueAsync(
+                        new QueueDescription(BookRentalCarQueueName)
+                        {
+                            // on failure, we move deadletter messages off to the car rental 
+                            // compensator's queue
+                            EnableDeadLetteringOnMessageExpiration = true,
+                            ForwardDeadLetteredMessagesTo = CancelRentalCarQueueName
+                        }),
+                await nm.QueueExistsAsync(SagaInputQueueName)
+                    ? await nm.GetQueueAsync(SagaInputQueueName)
+                    : await nm.CreateQueueAsync(
+                        new QueueDescription(SagaInputQueueName)
+                        {
+                            // book car is the first step
+                            ForwardTo = BookRentalCarQueueName
+                        })
+            };
         }
 
         async Task CleanupSagaTopologyAsync(NamespaceManager namespaceManager, IEnumerable<QueueDescription> queues)
@@ -291,6 +295,5 @@ namespace MessagingSamples
                 Console.ResetColor();
             }
         }
-
     }
 }

@@ -1,4 +1,21 @@
-﻿namespace MessagingSamples
+﻿//   
+//   Copyright © Microsoft Corporation, All Rights Reserved
+// 
+//   Licensed under the Apache License, Version 2.0 (the "License"); 
+//   you may not use this file except in compliance with the License. 
+//   You may obtain a copy of the License at
+// 
+//   http://www.apache.org/licenses/LICENSE-2.0 
+// 
+//   THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+//   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
+//   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
+// 
+//   See the Apache License, Version 2.0 for the specific language
+//   governing permissions and limitations under the License. 
+
+namespace MessagingSamples
 {
     using System;
     using System.Collections;
@@ -10,8 +27,8 @@
     class SagaTaskManager : IEnumerable
     {
         readonly MessagingFactory messagingFactory;
+        readonly Collection<Task> tasks = new Collection<Task>();
         CancellationToken cancellationToken;
-        Collection<Task> tasks = new Collection<Task>();
 
         public SagaTaskManager(MessagingFactory messagingFactory, CancellationToken cancellationToken)
         {
@@ -19,22 +36,32 @@
             this.cancellationToken = cancellationToken;
         }
 
-        public void Add(string taskQueueName, Func<BrokeredMessage, MessageSender, MessageSender, Task> doWork, string nextStepQueue, string compensatorQueue)
+        public Task Task => Task.WhenAll(this.tasks);
+
+        public IEnumerator GetEnumerator()
+        {
+            return this.tasks.GetEnumerator();
+        }
+
+        public void Add(
+            string taskQueueName,
+            Func<BrokeredMessage, MessageSender, MessageSender, Task> doWork,
+            string nextStepQueue,
+            string compensatorQueue)
         {
             var tcs = new TaskCompletionSource<bool>();
             var rcv = this.messagingFactory.CreateMessageReceiver(taskQueueName);
             var nextStepSender = this.messagingFactory.CreateMessageSender(nextStepQueue, taskQueueName);
             var compensatorSender = this.messagingFactory.CreateMessageSender(compensatorQueue, taskQueueName);
 
-            this.cancellationToken.Register(() => { rcv.Close(); tcs.SetResult(true); });
-            rcv.OnMessageAsync((m)=>doWork(m, nextStepSender, compensatorSender), new OnMessageOptions { AutoComplete = false });
+            this.cancellationToken.Register(
+                () =>
+                {
+                    rcv.Close();
+                    tcs.SetResult(true);
+                });
+            rcv.OnMessageAsync(m => doWork(m, nextStepSender, compensatorSender), new OnMessageOptions {AutoComplete = false});
             this.tasks.Add(tcs.Task);
-        }
-
-        public Task Task => Task.WhenAll(this.tasks);
-        public IEnumerator GetEnumerator()
-        {
-            return this.tasks.GetEnumerator();
         }
     }
 }

@@ -38,10 +38,10 @@ namespace MessagingSamples
             {
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
-                    var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "bookflight";
+                    var via = (message.Properties.ContainsKey("Via")
+                        ? ((string) message.Properties["Via"] + ",")
+                        : string.Empty) +
+                              "bookflight";
 
                     if (message.Label != null &&
                         message.ContentType != null &&
@@ -50,7 +50,6 @@ namespace MessagingSamples
                     {
                         var body = message.GetBody<Stream>();
                         dynamic travelBooking = DeserializeTravelBooking(body);
-
 
 
                         // do we want to book a flight? No? Let's just forward the message to
@@ -74,7 +73,7 @@ namespace MessagingSamples
                             // which usually involves a call to a third party
 
                             // every 9th flight booking sadly goes wrong
-                            if (message.SequenceNumber % 9 == 0)
+                            if (message.SequenceNumber%9 == 0)
                             {
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
@@ -103,15 +102,15 @@ namespace MessagingSamples
                     }
                     else
                     {
-                        await message.DeadLetterAsync(new Dictionary<string, object>
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
                             {
                                 {"TransactionError", "Unrecognized input message"},
-                                { "Via", via }
+                                {"Via", via}
                             });
                     }
                     scope.Complete();
                 }
-
             }
             catch (Exception e)
             {
@@ -124,10 +123,10 @@ namespace MessagingSamples
         {
             try
             {
-                var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "bookhotel";
+                var via = (message.Properties.ContainsKey("Via")
+                    ? ((string) message.Properties["Via"] + ",")
+                    : string.Empty) +
+                          "bookhotel";
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -160,7 +159,7 @@ namespace MessagingSamples
                             // which usually involves a call to a third party
 
                             // every 11th hotel booking sadly goes wrong
-                            if (message.SequenceNumber % 11 == 0)
+                            if (message.SequenceNumber%11 == 0)
                             {
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
@@ -190,11 +189,12 @@ namespace MessagingSamples
                     }
                     else
                     {
-                        await message.DeadLetterAsync(new Dictionary<string, object>
-                        {
-                            {"TransactionError", "Unexpected input message"},
-                            { "Via", via }
-                        });
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
+                            {
+                                {"TransactionError", "Unexpected input message"},
+                                {"Via", via}
+                            });
                     }
                     scope.Complete();
                 }
@@ -208,12 +208,12 @@ namespace MessagingSamples
 
         public static async Task BookRentalCar(BrokeredMessage message, MessageSender nextStepQueue, MessageSender compensatorQueue)
         {
-           try
+            try
             {
-                var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "bookcar";
+                var via = (message.Properties.ContainsKey("Via")
+                    ? ((string) message.Properties["Via"] + ",")
+                    : string.Empty) +
+                          "bookcar";
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -246,7 +246,7 @@ namespace MessagingSamples
                             // which usually involves a call to a third party
 
                             // every 13th car booking sadly goes wrong
-                            if (message.SequenceNumber % 13 == 0)
+                            if (message.SequenceNumber%13 == 0)
                             {
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
@@ -273,15 +273,15 @@ namespace MessagingSamples
                                 await message.CompleteAsync();
                             }
                         }
-
                     }
                     else
                     {
-                        await message.DeadLetterAsync(new Dictionary<string, object>
-                        {
-                            {"TransactionError", "Unexpected input message"},
-                            { "Via", via }
-                        });
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
+                            {
+                                {"TransactionError", "Unexpected input message"},
+                                {"Via", via}
+                            });
                     }
                     scope.Complete();
                 }
@@ -295,13 +295,12 @@ namespace MessagingSamples
 
         public static async Task CancelFlight(BrokeredMessage message, MessageSender nextStepQueue, MessageSender compensatorQueue)
         {
-           
             try
             {
-                var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "cancelflight";
+                var via = (message.Properties.ContainsKey("Via")
+                    ? ((string) message.Properties["Via"] + ",")
+                    : string.Empty) +
+                          "cancelflight";
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -369,10 +368,10 @@ namespace MessagingSamples
 
             try
             {
-                var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "cancelhotel";
+                var via = (message.Properties.ContainsKey("Via")
+                    ? ((string) message.Properties["Via"] + ",")
+                    : string.Empty) +
+                          "cancelhotel";
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -428,7 +427,7 @@ namespace MessagingSamples
             {
                 ContentType = ContentTypeApplicationJson,
                 Label = message.Label,
-                TimeToLive = message.ExpiresAtUtc - DateTime.UtcNow,
+                TimeToLive = message.ExpiresAtUtc - DateTime.UtcNow
             };
             foreach (var prop in message.Properties)
             {
@@ -442,10 +441,10 @@ namespace MessagingSamples
         {
             try
             {
-                var via = (message.Properties.ContainsKey("Via") ?
-                                      ((string)message.Properties["Via"] + ",") :
-                                      string.Empty) +
-                                      "cancelcar";
+                var via = (message.Properties.ContainsKey("Via")
+                    ? ((string) message.Properties["Via"] + ",")
+                    : string.Empty) +
+                          "cancelcar";
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
