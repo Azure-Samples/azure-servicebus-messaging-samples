@@ -1,7 +1,20 @@
-#Introduction
-This sample demonstrates how to use the Azure Service Bus messaging features within a transaction scope in order to ensure batches of messaging operations are committed atomically. See the Service Bus documentation for more information about the Service Bus before exploring the samples.
+# Atomic Transactions with Service Bus
 
-This sample demonstrates: sending and completing messages within a transaction scope; committing and aborting transactions.
+This sample illustrates how to use Azure Service Bus atomic transaction support by implementing a 
+travel booking scenario using the [Saga pattern](http://kellabyte.com/2012/05/30/clarifying-the-saga-pattern/)
+first formulated by [Hector Garcia Molina and Kenneth Salem [PDF]](http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf) 
+in 1987 as a form of a long-lived transaction.     
+
+Mind that the sample is of substantial complexity and primarily aimed at developers building frameworks leaning 
+on Azure Service Bus for creating robust foundations for business applications in the cloud and therefore the sample 
+code is very intentionally not "frameworked-over" with a smooth abstraction for hosting the simulated business logic,
+since the focus is on showing the interactions with the platform. 
+
+You can most certainly use the presented capabilities directly in a business application if you wish.
+
+In this document we will discuss the transactional capabilities of Service Bus first, then briefly discuss Sagas (you 
+are encouraged to review the blog article and the paper linked above for more depth) and how we project the concept
+onto Service Bus, and then we'll take a look at the code.  
 
 ##Prerequisites
 If you haven't already done so, please read the release notes document that explains how to sign up for a Azure account and how to configure your environment.
@@ -39,7 +52,7 @@ Please provide a connection string to Service Bus (? for help): <Your connection
 
 Creating Queues...
 
-Scenario 1: Send/Complete in a Transaction and then Complete
+Scenario 1: Send/Complete in a Transaction and then Complet
 Sending Message 'Message 1'
 Peek-Lock the Message... Message 1
 Inside Transaction 5378d67d-19f1-4d27-affa-3e93841be2aa:1
