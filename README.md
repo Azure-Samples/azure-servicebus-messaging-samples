@@ -1,19 +1,3 @@
-# CAUTION! CAUTION! CAUTION!
-
-THIS REPOSITORY IS WORK IN PROGRESS (February 2016). 
-
-NOT ALL CODE IS VERIFIED TO BE WORKING CORRECTLY AND THE DOCUMENTATION CONTAINS ERRORS OR MAY NOT BE CURRENT.
-
-MORE THAN EVER: THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, 
-FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT. 
-
-> You're more than welcome to look over my shoulder and check things out, though
->
->   - Clemens
-
-
-
 #Azure Service Bus Messaging samples
 
 This repository contains the official set of samples for the Azure Service Bus Messaging service (Standard and Premium), illustrating all core 
@@ -33,8 +17,18 @@ The samples assume that you are running on a supported Windows version and have 
 
 To run the samples, you must perform a few setup steps, including creating and configuring a Service Bus namespace. 
 For the required [setup.ps1](setup.ps1) and [cleanup.ps1](cleanup.ps1) scripts, **you must have Azure Powershell installed** 
-([if you don't here's how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)) and 
-run these scripts from the Azure Powershell environment.
+([if you don't here's how](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)) and properly
+configured and run these scripts from the Azure Powershell environment.
+
+Mind that this set of samples does presently use the "Azure Service Management" interface, so you need to initialize your environment access with 
+[Add-AzureAccount](https://msdn.microsoft.com/de-de/library/azure/dn790372.aspx) from the Azure Powershell command line. 
+
+``` PS
+PS C:\> Add-AzureAccount
+``` 
+
+This will prompt you to log in with the account associated with your Azure subscription(s). The cached access token will eventually expire; when 
+tzhat happens you will be asked to run Add-AzureAccount again.  
 
 ### Setup      
 The [setup.ps1](setup.ps1) script will either use the account and subscription you have previously configured for your Azure Powershell environment
@@ -70,8 +64,7 @@ model is strongly encouraged at all times as it yields significantly more effici
 > The samples are therefore more explicit and take more lines of code than the simplest use of the API would. Distributed 
 > systems, and especially cloud systems, are dynamic environments and the samples reflect this reality.     
 
-##Included Samples
-
+## Samples
 
 ###Getting Started
 
