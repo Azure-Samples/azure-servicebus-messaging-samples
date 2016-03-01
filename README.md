@@ -107,8 +107,6 @@ model is strongly encouraged at all times as it yields significantly more effici
 * **Atomic Transactions** - Service Bus supports wrapping [AtomicTransactions](./AtomicTransactions) scopes around a range of 
   operations, allowing for such groups of operations to either jointly succeed or fail, enabling creating more robust business 
   applications in the cloud.
-* **Transfer Queues** - [TransferQueues](./TransferQueues) allows the transactional transfer of messages to multiple target 
-  queues or topics in the scope of a single atomic transactions "via" a shared transfer queue.
 * **Durable Senders** - The [DurableSender](./DurableSender) sample shows how to make client applications robust against frequent
   network link failures.
 * **Geo Replication** - The [GeoReplication](./GeoReplication) sample illustrates how to route messages through two distinct 
@@ -124,7 +122,7 @@ model is strongly encouraged at all times as it yields significantly more effici
 * **Session State** - The [SessionState](./SessionState) sample shows how to keep track of processing a workflow using 
   the session state feature. 
  
- ### Windows Communication Foundation (WCF) Binding
+### Windows Communication Foundation (WCF) Binding
   
 * **NetMessagingBinding** - The [NetMessagingBinding](./NetMessagingBinding) sample shows how to use Service Bus Queues 
    and Topics seamlessly the context of WCF applications using the NetMessagingBinding.
