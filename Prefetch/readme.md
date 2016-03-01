@@ -7,8 +7,8 @@ turned off.
 
 ## What is Prefetch?
 
-The Prefetch feature is turned on by setting the **PrefetchCount** property of a *MessageReceiver*,
-*QueueClient*, or *SubscriptionClient* to a number greater than zero. Setting the value to zero 
+The Prefetch feature is turned on by setting the ```PrefetchCount``` property of a ```MessageReceiver```,
+```QueueClient```, or ```SubscriptionClient``` to a number greater than zero. Setting the value to zero 
 turns prefetch off.
 
 ``` C#
@@ -23,43 +23,43 @@ turns prefetch off.
 You can easily add this setting to the receive-side of the [QueuesGettingStarted](../QueuesGettingStarted) or 
 [ReceiveLoop](../ReceiveLoop) settings to see the effect in those contexts. 
 
-When Prefetch is enabled, the receiver will quietly acquire more messages, up to the *PrefetchCount* 
-limit, than what the application immediately asks for. A single initial *Receive(Async)* call will 
+When Prefetch is enabled, the receiver will quietly acquire more messages, up to the ```PrefetchCount``` 
+limit, than what the application immediately asks for. A single initial ```Receive```/```ReceiveAsync``` call will 
 therefore acquire a message for immediate consumption that will be returned as son as available, 
 and the client will proceed to acquire further messages to fill the prefetch buffer in the background.
 
-While messages are available in the prefetch buffer, any subsequent *Receive(Async)* calls will be 
+While messages are available in the prefetch buffer, any subsequent ```Receive```/```ReceiveAsync``` calls will be 
 immediately satisfied from the buffer, and the buffer is replenished in the background as space 
 becomes available. If there are no messages available for delivery, the receive operation will drain 
 the buffer and then wait or block as expected.
 
-Prefetch also works equivalently with the *OnMessage* and *OnMessageAsync* APIs.         
+Prefetch also works equivalently with the ```OnMessage``` and ```OnMessageAsync``` APIs.         
     
-## If it is faster, why is Prefetch not a default choice?
+## If it is faster, why is Prefetch not the default option?
 
 Prefetch speeds up the message flow by aiming to have a message readily available for local 
 retrieval when and before the application asks for one.
 
-This throughput again is the result of a tradeoff decision that the application author needs to make 
+This throughput gain is the result of a tradeoff decision that the application author needs to make 
 explicitly:
 
-* In the *ReceiveAndDelete* receive mode, all messages that are acquired into the prefetch buffer
+* With the ```ReceiveAndDelete``` receive mode, all messages that are acquired into the prefetch buffer
   will no longer be available in the queue and will only reside in the in-memory prefetch buffer
-  until they have been received into the application through the *Receive(Async)* or *OnMessage(Async)* 
-  APIs. If the application terminates before the messages have been received into the application, 
-  those messages are irrecoverably lost. 
-* In the *PeekLock* receive mode, messages fetched into the Prefetch buffer will be acquired into 
+  until they have been received into the application through the ```Receive```/```ReceiveAsync``` 
+  or ```OnMessage```/```OnMessageAsync``` APIs. If the application terminates before the messages 
+  have been received into the application, those messages are irrecoverably lost. 
+* In the ```PeekLock``` receive mode, messages fetched into the Prefetch buffer will be acquired into 
   the buffer in a locked state and will have the timeout clock for the lock ticking. If the prefetch 
   buffer is large, and processing takes so long that message locks expire while residing in the 
   prefetch buffer or even expire while the application is processing the message, there might be some 
   confusing effects for the application to handle. 
   * The application might acquire a message with an expired or imminently expiring lock. If that is the
     case, the application might process the message, but then find that it cannot complete it due to 
-    a lock expiration. The application can check the *LockedUntilUtc* property (which is subject to 
+    a lock expiration. The application can check the ```LockedUntilUtc``` property (which is subject to 
     clock skew between the broker and local machine's clock). If the message lock is expired, the 
     application must ignore the message; no API call on or with the message should be made. 
     If the message is not expired but expiration is imminent, the lock can be renewed and extended 
-    by another default lock period by calling *message.RenewLock()*
+    by another default lock period by calling ```message.RenewLock()```
  *  If the lock silently expires in the prefetch buffer, the message is being treated as abandoned and
     is again made available for retrieval from the queue. That might then again cause it to be fetched 
     into the prefetch buffer; placed at the end. If the prefetch buffer cannot usually be worked through 
@@ -67,7 +67,7 @@ explicitly:
     effectively delivered in a usable (validly locked) state and will eventually be tossed into the 
     deadletter queue once the maximum delivery count is exceeded.
     
- If you need a high level of reliability for message processing and processing takes significant work
+ If you need a high degree of reliability for message processing and processing takes significant work
  and therefore time, it is recommended to use the prefetch feature very conservatively or not at all.
  
  If you need high throughout and message processing is commonly cheap, prefetch will yield 
@@ -128,7 +128,7 @@ set up a fresh receiver.
     Console.ReadLine();
 ```
 
-The core of the *SendAndReceiveMessages* method is a loop that picks up the previously sent 
+The core of the ```SendAndReceiveMessages``` method is a loop that picks up the previously sent 
 messages and measures the time taken.
 
 ``` C#
@@ -154,5 +154,5 @@ messages and measures the time taken.
 ``` 
 
 When you execute the sample you will find that the prefetch variant will yield significantly
-higher throughput, even though each message is explicityl being completed with another roundtrip 
+higher throughput, even though each message is explicitly being completed with another roundtrip 
 network gesture.  

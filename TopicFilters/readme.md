@@ -1,7 +1,7 @@
 #Topic Subscription Filters
 
-This sample illustrates creating filtered subscriptions for topics. It shows a simple true-filter that lets all messages pass,
-a filter with a composite SQL-like condition, a rule comnbining a filter with a set of actions, and a correlation filter 
+This sample illustrates creating filtered subscriptions for topics. It shows a simple *true-filter* that lets all messages pass,
+a filter with a composite SQL-like condition, a rule combining a filter with a set of actions, and a correlation filter 
 condition.  
 
 ## Prerequisites and Setup
@@ -17,11 +17,11 @@ Microsoft.ServiceBus.dll assembly, including dependencies.
 
 ## What are Subscription Filters?
 
-Each newly created subscription has at least one filter. If you don't explicitly specify one, the applied filter is the 
+Each newly created topic subscription has at least one filter. If you don't explicitly specify one, the applied filter is the 
 *true* filter that allows all messages to be selected into the subscription.  
 
 In fact, filters are applied to subscriptions as part of of a *rule*, which is a named entity and combines a condition (the filter)
-and an action. A single subscription can have hundreds of such rules. 
+and an action. A single subscription may have hundreds of such rules. 
 
 Most applications only need filters, and therefore the Service Bus API lets you bypass the added complexity of handling 
 rules when you just need a single filter or just a single rule. This sample shows the simpler APIs, 
@@ -29,17 +29,17 @@ the [SubscriptionRules](../SubscriptionRules) sample shows how to manage rules f
 
 Service Bus supports three kinds of filters:
 
-* **Boolean filters** - in the form of the *TrueFilter* and the *FalseFilter*. The conditions of these filters either cause all 
-  arriving messages (*true*) or none of the arriving messages (*false*) to be selected for the subscription.
-* **SQL Filters** - A *SqlFilter* holds a [SQL-like condition expression](https://msdn.microsoft.com/library/azure/microsoft.servicebus.messaging.sqlfilter.sqlexpression.aspx)
+* **Boolean filters** - in the form of the ```TrueFilter``` and the ```FalseFilter```. The conditions of these filters either cause all 
+  arriving messages (```true```) or none of the arriving messages (```false```) to be selected for the subscription.
+* **SQL Filters** - A ```SqlFilter``` holds a [SQL-like condition expression](https://msdn.microsoft.com/library/azure/microsoft.servicebus.messaging.sqlfilter.sqlexpression.aspx)
   that is evaluated in the broker against the arriving messages' user-defined properties and system properties. All system
-  properties (which are all properties explicitly listed on the [BrokeredMessage class](https://msdn.microsoft.com/library/microsoft.servicebus.messaging.brokeredmessage_properties.aspx)) 
-  must be prefixed with "sys." in the condition expression. The SQL subset implements testing for existence of peoperties (EXISTS), 
-  testing for null-values (IS NULL), logical NOT/AND/OR, relational operators, numeric arithmetic, and simple text pattern matching with LIKE.
-* **Correlation Filters** - A *[CorrelationFilter](https://msdn.microsoft.com/library/microsoft.servicebus.messaging.correlationfilter.aspx)* holds a
+  properties (which are all properties explicitly listed on the [```BrokeredMessage``` class](https://msdn.microsoft.com/library/microsoft.servicebus.messaging.brokeredmessage_properties.aspx)) 
+  must be prefixed with ```sys.``` in the condition expression. The SQL subset implements testing for existence of properties (```EXISTS```), 
+  testing for null-values (```IS NULL```), logical ```NOT```/```AND```/```OR```, relational operators, numeric arithmetic, and simple text pattern matching with ```LIKE```.
+* **Correlation Filters** - A [```CorrelationFilter```](https://msdn.microsoft.com/library/microsoft.servicebus.messaging.correlationfilter.aspx) holds a
   set of conditions that are matched against one of more of an arriving message's user and system properties. A common use is a match 
-  against the *CorrelationId* property, but the application can also choose to match against *ContentType*, *Label*, *MessageId*, *ReplyTo*, *ReplyToSessionId*, 
-  *SessionId*, *To*, and any user-defined properties. A match exists when an arriving message's value for a property is equal to the 
+  against the ```CorrelationId``` property, but the application can also choose to match against ```ContentType```, ```Label```, ```MessageId```, ```ReplyTo```, ```ReplyToSessionId```, 
+  ```SessionId```, ```To```, and any user-defined properties. A match exists when an arriving message's value for a property is equal to the 
   value specified in the correlation filter. For string expressions, the comparison is case-sensitive. When specifying multiple match 
   properties, the filter combines them as a logical AND condition, meaning all conditions must match for the filter to match.   
                                           
@@ -59,7 +59,7 @@ changes to the message properties are private to the particular subscription.
 
 ## The Sample
 
-The sample code shows how to create subscriptions with filters using the Service Bus management API (via the *NamespaceManager* class)
+The sample code shows how to create subscriptions with filters using the Service Bus management API (via the ```NamespaceManager``` class)
 and also shows the effects of those filters at runtime.
 
 > **It is DISCOURAGED for applications to routinely set up and tear down topics and subscriptions as a part of regular message processing.**
@@ -70,9 +70,9 @@ and also shows the effects of those filters at runtime.
 > **NOT** be used to determine whether an entity exists before sending or receiving, which will throw an appropriate exception, or 
 > to determine availability of messages before attempting to receive them.   
 
-Most of the key functionality to look throuhg is right in the sample's *Run()* method that is invoked by the boilerplate code
+Most of the key functionality to look through is right in the sample's ```Run()``` method that is invoked by the boilerplate code
 with a namespace address and a token that gives the sample full management permissions on the namespace. Those permissions are 
-required to work with most operations on the *NamespaceManager* class.
+required to work with most operations on the ```NamespaceManager``` class.
 
 ```C#    
       // Create messaging factory and ServiceBus namespace client.
@@ -114,9 +114,9 @@ the message gets selected for the subscription.
         new SqlFilter("color = 'blue' AND quantity = 10"));
 ```
 
-The following subscription is created with a full *RuleDescription*, that includes a filter checking for ```color = 'red'````
+The following subscription is created with a full ```RuleDescription```, that includes a filter checking for ```color = 'red'````
 and an action that will modify each matched message. Each matched message will have the 'quantity' property numeric value 
-halved, the 'priority' property removed, and the *CorrelationId* system property set to "low".
+halved, the 'priority' property removed, and the ```CorrelationId``` system property set to "low".
 
 ``` C#      
     await namespaceManager.CreateSubscriptionAsync(
@@ -133,8 +133,8 @@ halved, the 'priority' property removed, and the *CorrelationId* system property
         });
 ```
 
-Finally, we create a subscription that uses a *CorrelationFilter*, which checks for the values of the *Label* and
-*CorrelationId* properties.  
+Finally, we create a subscription that uses a ```CorrelationFilter```, which checks for the values of the ```Label``` and
+```CorrelationId``` properties.  
 
 ``` C#
     namespaceManager.CreateSubscription(topicDescription.Path, SubscriptionHighPriorityOrders, 

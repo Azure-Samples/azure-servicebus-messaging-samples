@@ -6,7 +6,7 @@ first formulated by [Hector Garcia Molina and Kenneth Salem [PDF]](http://www.cs
 in 1987 as a form of a long-lived transaction.     
 
 Mind that the sample is of substantial complexity and primarily aimed at developers building frameworks leaning 
-on Azure Service Bus for creating robust foundations for business applications in the cloud and therefore the sample 
+on Azure Service Bus for creating robust foundations for business applications in the cloud. Therefore, the sample 
 code is very intentionally not "frameworked-over" with a smooth abstraction for hosting the simulated business logic,
 since the focus is on showing the interactions with the platform. 
 

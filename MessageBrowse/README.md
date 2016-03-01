@@ -5,33 +5,33 @@ purposes and/or for tooling built on top of Service Bus.
 
 ## How does Peek work?
 
-The *Peek(Async)* and *PeekBatch(Async)* methods exists on all receiver objects: MessageReceiver, MessageSession, QueueClient, and SubscriptionClient.
-It works on queues and subscriptions and their respective deadletter queue.
+The ```Peek```/```PeekAsync``` and ```PeekBatch```/PeekAsync``` methods exists on all receiver objects: ```MessageReceiver```, ```MessageSession```, ```QueueClient```, and ```SubscriptionClient```.
+Peek works on all queues and subscriptions and their respective deadletter queues.
 
-When called repeatedly, the Peek method enumerates all messages that exist in the queue's or subscription's log, in sequence number order, from the 
+When called repeatedly, the ```Peek``` method enumerates all messages that exist in the queue's or subscription's log, in sequence number order, from the 
 lowest available sequence number to the highest. This is the order in which messges were enqueued, it is not the order in which messages might 
 eventually be retrieved. 
 
-> The *SequenceNumber* property that is set on each brokered message as it is accepted into the message log, 
+> The ```SequenceNumber``` property that is set on each brokered message as it is accepted into the message log, 
 > is a monotonically increasing and gapless sequence number. The sequence number is authoritiative for determining order of arrival. 
 > For partitioned entities, the lower 48 bits hold the per-partition sequence number, the upper 16 bits hold the partition number.
 
 You can also seed an overload of the method with a sequence number to start at, and then call the parameterless method overload to enumerate further. 
-*PeekBatch* functions equivalently, but retrieves a set of messages at once.    
+```PeekBatch``` functions equivalently, but retrieves a set of messages at once.    
 
 Peek returns *all* messages that exist in the queue's or subscription's message log, not only those available for immediate acquisition with 
-*Receive()*. The *State* property of each message tells you whether the message is *Active* (available to be received), *Deferred* (see [Deferral](../Deferral)) 
+```Receive()```. The ```State``` property of each message tells you whether the message is *Active* (available to be received), *Deferred* (see [Deferral](../Deferral)) 
 or *Scheduled* (see [ScheduledMessages](.../ScheduledMessages)).   
 
-Garbage collection work on a log occurs asynchronously and not necessarily exactly when messages expire, and therefore *Peek* may also 
+Garbage collection work on a log occurs asynchronously and not necessarily exactly when messages expire, and therefore ```Peek``` may also 
 return messages that have already expired and will be removed or deadlettered when receive is next invoked on the queue or 
 subscription (by anyone). This is especially important to keep in mind when attempting to recover deferred messages from the queue.
- A message for which the *ExpiresAtUtc* instant has passed can no longer be retrieved or operated on, even when it is being returned by 
- *Peek*. Returning these messages is deliberate as Peek is a diagnostics tool reflecting the current state of the log.              
+ A message for which the ```ExpiresAtUtc``` instant has passed can no longer be retrieved or operated on, even when it is being returned by 
+ ```Peek```. Returning these messages is deliberate as Peek is a diagnostics tool reflecting the current state of the log.              
 
 Peek will also return messages that have been locked and are being processed by other receivers, but have not yet been completed. Whether a 
-message is indeed locked cannot be observed on peeked messages, and the *LockedUntilUtc* and *LockToken* properties will throw an 
-*InvalidOperationException* when the application attempts to read them.
+message is indeed locked cannot be observed on peeked messages, and the ```LockedUntilUtc``` and ```LockToken``` properties will throw an 
+```InvalidOperationException``` when the application attempts to read them.
 
 ## Prerequisites and Setup
 
@@ -49,11 +49,11 @@ Microsoft.ServiceBus.dll assembly, including dependencies.
 The sample is a variation of the [ReceiveLoop](../ReceiveLoop) sample and we will assume that you worked through that sample and already 
 understand the structure and most API elements.
 
-What's new in this sample is that we obviously don't *Receive* but *Peek*. When you run the sample repeatedly, you will see that messages
+What's new in this sample is that we obviously don't ```Receive``` but ```Peek```. When you run the sample repeatedly, you will see that messages
 accumulate in the log as we don't receive and remove them. You will also observe that expired messages (we send with a 2 minute 
 time-to-live setting) may hang around past their expiration time.
 
-The method *PeekMessagesAsync* implements the browse loop that iterates once through the log:
+The method ```PeekMessagesAsync``` implements the browse loop that iterates once through the log:
 
 ```C#
    async Task PeekMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
@@ -74,7 +74,7 @@ The method *PeekMessagesAsync* implements the browse loop that iterates once thr
             {
 ```
 
-The *Peek* operation behaves exactly like *Receive* in that it returns *null* when no message is available and the end of the log
+The ```Peek``` operation behaves exactly like ```Receive``` in that it returns ```null``` when no message is available and/or the end of the log
 has been reached.  
 
 ```C#
@@ -88,7 +88,7 @@ has been reached.
                         Console.ForegroundColor = ConsoleColor.Cyan;
 ```
 
-The one extra property we're writing out to the console in this sample is the *State* property, reflecting whether the message is 
+The one extra property we're writing out to the console in this sample is the ```State``` property, reflecting whether the message is 
 active, deferred, or scheduled. 
 
 ```C#                        
@@ -129,13 +129,13 @@ active, deferred, or scheduled.
 
 ## Using PeekBatch
 
-PeekBatch gets multiple messages and returns them as an enumeration. If no messages 
-are available, the enumeration object is empty, not *null*. A *PeekBatch* variation of the above loop will therefore 
+```PeekBatch``` gets multiple messages and returns them as an enumeration. If no messages 
+are available, the enumeration object is empty, not ```null```. A ```PeekBatch``` variation of the above loop will therefore 
 keep track if any messages have been returned, at all, and terminate based on that observation. 
 
-The count of *20* we pass into *PeekBatchAsync* for how many messages we'd like to obtain is an upper bound. The service 
+The count of ```20``` we pass into ```PeekBatchAsync``` for how many messages we'd like to obtain is an upper bound. The service 
 may return any number of messages, up to 20 in this case, but will return at least one message if messages are 
-available past the latest read sequence number.  At most 256 kByte of cumulative message size will be returned in 
+available past the latest read sequence number.  **At most 256 kByte** of cumulative message size will be returned in 
 one batch call.     
 
 ```C#
