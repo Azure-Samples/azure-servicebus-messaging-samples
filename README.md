@@ -75,8 +75,15 @@ model is strongly encouraged at all times as it yields significantly more effici
   
 ###Basic Message Handling
 
-* **Receive Loop** - [ReceiveLoop](./ReceiveLoop) shows how to use an explicit receive loop instead of the recommended, callback-based 
-  OnMessage(Async) API used in the "getting started" sample.
+* **Queue Receive Loop** - [QueueReceiveLoop](./QueueReceiveLoop) shows how to use an explicit receive loop with a queues instead of the 
+   recommended, callback-based OnMessage(Async) API used in the "getting started" sample.
+* **Subscription Receive Loop** - [SubscriptionReceiveLoop](./SubscriptionReceiveLoop) similarly shows how to use an explicit receive loop 
+   with a topic subscription.
+* **Senders and Receivers with Queues** - The [SendersReceiversWithQueues](./SendersReceiversWithQueues) sample shows how to use the 
+  ``MessagingFactory```for explicit connection management and the generic ```MessageSender```and ```MessageReceiver``` abstractions with queues. 
+* **Senders and Receivers with with Topics** - The [SendersReceiversWithTopics](./SendersReceiversWithTopics) sample is a variation of 
+   the [SendersReceiversWithQueues](./SendersReceiversWithQueues) sample and shows how nearly identical code can be use with Queues and Topics
+   when using the ```MessageSender```and ```MessageReceiver``` abstractions.  
 * **Message Prefetching** - The [Prefetch](./Prefetch) sample shows the difference between having "prefetch" turned on or off for the receiver. 
   Prefetch is a background receive operation that acquires messages into a buffer before the application itself calls *Receive* and therefore 
   optimizes and often accelerates the message flow.
