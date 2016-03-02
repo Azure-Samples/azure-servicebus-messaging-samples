@@ -94,4 +94,4 @@ if(Test-Path "$scriptDir\..\packages")
     Remove-Item "$scriptDir\..\packages" -Force -Recurse -ErrorAction SilentlyContinue
 }
 
-Remove-Module "Logging-ServiceBusRelaySamples.psm1" -Force -ErrorAction SilentlyContinue
+Remove-Module "Logging-ServiceBusMsgSamples.psm1" -Force -ErrorAction SilentlyContinue

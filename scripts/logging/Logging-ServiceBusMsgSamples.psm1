@@ -2,12 +2,12 @@
 {
     if([String]::IsNullOrWhiteSpace($LogFile))
     {
-        $LogDir = "run"
+        $LogDir = "log"
         if(-not (Test-Path $LogDir))
         {
             mkdir $LogDir -ErrorAction SilentlyContinue
         }
-        $LogFile = Join-Path $LogDir ("servicebus-relay-samples-" + [System.DateTime]::Now.ToString("yyyyMMddHH") + ".log")
+        $LogFile = Join-Path $LogDir ("servicebus-msg-samples-" + [System.DateTime]::Now.ToString("yyyyMMddHH") + ".log")
     }
  
     return $LogFile

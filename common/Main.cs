@@ -29,10 +29,21 @@ namespace MessagingSamples
 
     // This is a common entry point class for all samples that provides
     // the Main() method entry point called by the CLR. It loads the properties
-    // stored in the "azure-relay-samples.properties" file from the user profile
+    // stored in the "azure-msg-samples.properties" file from the user profile
     // and then allows override of the settings from environment variables.
     class AppEntryPoint
     {
+        const string RootSampleSendKeyName = "rootsamplesend";
+        const string RootSampleManageKeyName = "rootsamplemanage";
+        const string BasicQueueName = "BasicQueue";
+        const string PartitionedQueueName = "PartitionedQueue";
+        const string DupdetectQueueName = "DupdetectQueue";
+        const string BasicTopicName = "BasicTopic";
+        const string SendKeyName = "samplesend";
+        const string ReceiveKeyName = "samplelisten";
+        const string SessionQueueName = "SessionQueue";
+        const string BasicQueue2Name = "BasicQueue2";
+        const string ManageKeyName = "samplemanage";
         static readonly string servicebusNamespace = "SERVICEBUS_NAMESPACE";
         static readonly string servicebusEntityPath = "SERVICEBUS_ENTITY_PATH";
         static readonly string servicebusFqdnSuffix = "SERVICEBUS_FQDN_SUFFIX";
@@ -111,337 +122,361 @@ namespace MessagingSamples
             }
 
             var hostName = properties[servicebusNamespace] + "." + properties[servicebusFqdnSuffix];
-            var rootUri = new UriBuilder("http", hostName, -1, "/").ToString();
+            var rootUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, "/").ToString();
             var sbUri = new UriBuilder("sb", hostName, -1, "/").ToString();
 
-            var program = Activator.CreateInstance(typeof (Program));
+            var program = Activator.CreateInstance(typeof(Program));
 
             if (program is IDynamicSample)
             {
                 var token =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "rootsamplemanage",
+                        RootSampleManageKeyName,
                         properties[servicebusManageKey])
                         .GetWebTokenAsync(rootUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
-                ((IDynamicSample) program).Run(sbUri, token).GetAwaiter().GetResult();
+                ((IDynamicSample)program).Run(sbUri, token).GetAwaiter().GetResult();
             }
             else if (program is IDynamicSampleWithKeys)
             {
-                ((IDynamicSampleWithKeys) program).Run(
+                ((IDynamicSampleWithKeys)program).Run(
                     sbUri,
-                    "rootsamplemanage",
+                    RootSampleManageKeyName,
                     properties[servicebusManageKey],
-                    "rootsamplesend",
+                    RootSampleSendKeyName,
                     properties[servicebusSendKey],
-                    "rootsamplesend",
+                    RootSampleSendKeyName,
                     properties[servicebusListenKey]).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueSendReceiveSample)
             {
-                var entityName = "BasicQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = BasicQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IBasicQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueSendSample)
             {
-                var entityName = "BasicQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = BasicQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IBasicQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicQueueReceiveSample)
             {
-                var entityName = "BasicQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = BasicQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IBasicQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IPartitionedQueueSendReceiveSample)
             {
-                var entityName = "PartitionedQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = PartitionedQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IPartitionedQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IPartitionedQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IPartitionedQueueSendSample)
             {
-                var entityName = "PartitionedQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = PartitionedQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IPartitionedQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IPartitionedQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IPartitionedQueueReceiveSample)
             {
-                var entityName = "PartitionedQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = PartitionedQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IPartitionedQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IPartitionedQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
-            else if (program is ISessionQueueSendReceiveSample)
+            else
+                if (program is ISessionQueueSendReceiveSample)
             {
-                var entityName = "SessionQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, SessionQueueName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((ISessionQueueSendReceiveSample)program).Run(sbUri, SessionQueueName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is ISessionQueueSendSample)
             {
-                var entityName = "SessionQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = SessionQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((ISessionQueueSendSample)program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is ISessionQueueReceiveSample)
             {
-                var entityName = "SessionQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = SessionQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((ISessionQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((ISessionQueueReceiveSample)program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueSendReceiveSample)
             {
-                var entityName = "DupdetectQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, DupdetectQueueName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueSendReceiveSample)program).Run(sbUri, DupdetectQueueName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueSendSample)
             {
-                var entityName = "DupdetectQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, DupdetectQueueName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueSendSample)program).Run(sbUri, DupdetectQueueName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IDupdetectQueueReceiveSample)
             {
-                var entityName = "DupdetectQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, DupdetectQueueName).ToString();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDupdetectQueueReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IDupdetectQueueReceiveSample)program).Run(sbUri, DupdetectQueueName, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicSendReceiveSample)
             {
-                var entityName = "BasicTopic";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, BasicTopicName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicSendReceiveSample) program).Run(sbUri, entityName, sendToken, receiveToken).GetAwaiter().GetResult();
+                ((IBasicTopicSendReceiveSample)program).Run(sbUri, BasicTopicName, sendToken, receiveToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicSendSample)
             {
-                var entityName = "BasicTopic";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, BasicTopicName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicSendSample) program).Run(sbUri, entityName, sendToken).GetAwaiter().GetResult();
+                ((IBasicTopicSendSample)program).Run(sbUri, BasicTopicName, sendToken).GetAwaiter().GetResult();
             }
             else if (program is IBasicTopicReceiveSample)
             {
-                var entityName = "BasicTopic";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, BasicTopicName).ToString();
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IBasicTopicReceiveSample) program).Run(sbUri, entityName, receiveToken).GetAwaiter().GetResult();
+                ((IBasicTopicReceiveSample)program).Run(sbUri, BasicTopicName, receiveToken).GetAwaiter().GetResult();
             }
+            else if (program is IBasicTopicConnectionStringSample)
+            {
+                var connectionString =
+                    ServiceBusConnectionStringBuilder.CreateUsingSharedAccessKey(
+                        new Uri(rootUri),
+                        RootSampleManageKeyName,
+                        properties[servicebusManageKey]);
 
+                ((IBasicTopicConnectionStringSample)program).Run(BasicTopicName, connectionString).GetAwaiter().GetResult();
+            }
 
             else if (program is IConnectionStringSample)
             {
                 var connectionString =
                     ServiceBusConnectionStringBuilder.CreateUsingSharedAccessKey(
                         new Uri(rootUri),
-                        "rootsamplemanage",
+                        RootSampleManageKeyName,
                         properties[servicebusManageKey]);
 
-                ((IConnectionStringSample) program).Run(connectionString).GetAwaiter().GetResult();
+                ((IConnectionStringSample)program).Run(connectionString).GetAwaiter().GetResult();
+            }
+            else if (program is IBasicQueueConnectionStringSample)
+            {
+                var connectionString =
+                    ServiceBusConnectionStringBuilder.CreateUsingSharedAccessKey(
+                        new Uri(rootUri),
+                        RootSampleManageKeyName,
+                        properties[servicebusManageKey]);
+
+                ((IBasicQueueConnectionStringSample)program).Run(BasicQueueName, connectionString).GetAwaiter().GetResult();
             }
             else if (program is IDualQueueSendReceiveSample)
             {
-                var entityName = "BasicQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = BasicQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                var entity2Name = "BasicQueue2";
-                var entity2Uri = new UriBuilder("http", hostName, -1, entity2Name).ToString();
+                var entity2Name = BasicQueue2Name;
+                var entity2Uri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entity2Name).ToString();
 
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveSample)program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
             }
 
             else if (program is IDualQueueSampleWithFullRights)
             {
-                var entityName = "BasicQueue";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityName = BasicQueueName;
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entityName).ToString();
 
                 var token1 =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplemanage",
+                        ManageKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                var entity2Name = "BasicQueue2";
-                var entity2Uri = new UriBuilder("http", hostName, -1, entity2Name).ToString();
+                var entity2Name = BasicQueue2Name;
+                var entity2Uri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entity2Name).ToString();
 
                 var token2 =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplemanage",
+                        ManageKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSampleWithFullRights) program).Run(sbUri, entityName, token1, entity2Name, token2).GetAwaiter().GetResult();
+                ((IDualQueueSampleWithFullRights)program).Run(sbUri, entityName, token1, entity2Name, token2).GetAwaiter().GetResult();
             }
 
             else if (program is IDualQueueSendReceiveFlipsideSample)
             {
-                var entityName = "BasicQueue2";
-                var entityUri = new UriBuilder("http", hostName, -1, entityName).ToString();
+                var entityUri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, BasicQueue2Name).ToString();
 
                 var sendToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplesend",
+                        SendKeyName,
                         properties[servicebusSendKey])
                         .GetWebTokenAsync(entityUri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                var entity2Name = "BasicQueue";
-                var entity2Uri = new UriBuilder("http", hostName, -1, entity2Name).ToString();
+                var entity2Name = BasicQueueName;
+                var entity2Uri = new UriBuilder(Uri.UriSchemeHttp, hostName, -1, entity2Name).ToString();
 
                 var receiveToken =
                     TokenProvider.CreateSharedAccessSignatureTokenProvider(
-                        "samplelisten",
+                        ReceiveKeyName,
                         properties[servicebusListenKey])
                         .GetWebTokenAsync(entity2Uri, string.Empty, true, TimeSpan.FromHours(1)).GetAwaiter().GetResult();
 
-                ((IDualQueueSendReceiveFlipsideSample) program).Run(sbUri, entityName, sendToken, entity2Name, receiveToken).GetAwaiter().GetResult();
+                ((IDualQueueSendReceiveFlipsideSample)program).Run(sbUri, BasicQueue2Name, sendToken, entity2Name, receiveToken).
+                    GetAwaiter().
+                    GetResult();
+            }
+            else if (program is IBasicQueueSampleWithKeys)
+            {
+                ((IBasicQueueSampleWithKeys)program).Run(
+                    sbUri,
+                    BasicQueueName,
+                    SendKeyName,
+                    properties[servicebusSendKey],
+                    ReceiveKeyName,
+                    properties[servicebusListenKey]).GetAwaiter().GetResult();
+                ;
             }
             else if (program is IDualBasicQueueSampleWithKeys)
             {
-                ((IDualBasicQueueSampleWithKeys) program).Run(
+                ((IDualBasicQueueSampleWithKeys)program).Run(
                     sbUri,
-                    "BasicQueue",
-                    "BasicQueue2",
-                    "samplesend",
+                    BasicQueueName,
+                    BasicQueue2Name,
+                    SendKeyName,
                     properties[servicebusSendKey],
-                    "samplelisten",
+                    ReceiveKeyName,
                     properties[servicebusListenKey]).GetAwaiter().GetResult();
-                ;
             }
         }
     }
@@ -449,6 +484,17 @@ namespace MessagingSamples
     interface IBasicQueueSendReceiveSample
     {
         Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken);
+    }
+
+    interface IBasicQueueSampleWithKeys
+    {
+        Task Run(
+            string namespaceAddress,
+            string basicQueueName,
+            string sendKeyName,
+            string sendKey,
+            string receiveKeyName,
+            string receiveKey);
     }
 
     interface IBasicQueueSendSample
@@ -541,6 +587,16 @@ namespace MessagingSamples
     interface IConnectionStringSample
     {
         Task Run(string connectionString);
+    }
+
+    interface IBasicQueueConnectionStringSample
+    {
+        Task Run(string queueName, string connectionString);
+    }
+
+    interface IBasicTopicConnectionStringSample
+    {
+        Task Run(string queueName, string connectionString);
     }
 
     interface IDynamicSample

@@ -7,7 +7,7 @@
 // 
 //   http://www.apache.org/licenses/LICENSE-2.0 
 // 
-//   THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
+//   THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS
 //   OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
 //   ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A
 //   PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.
@@ -20,41 +20,38 @@ namespace MessagingSamples
     using System;
     using System.IO;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
     using Newtonsoft.Json;
 
-    public class Program : IBasicQueueSendReceiveSample
+    public class Program : IBasicQueueConnectionStringSample
     {
-        public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
+        QueueClient receiveClient;
+        QueueClient sendClient;
+
+        public async Task Run(string queueName, string connectionString)
         {
             Console.WriteLine("Press any key to exit the scenario");
 
-            var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken);
-            
-            await Task.WhenAll(sendTask, receiveTask);
+            this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
+            var receiveTask = this.ReceiveMessagesAsync();
+
+            this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
+            var sendTask = this.SendMessagesAsync();
 
             Console.ReadKey();
+
+            // close the receive client to shut down the receive loop
+            await this.receiveClient.CloseAsync();
+
+            // wait for all work to complete
+            await Task.WhenAll(sendTask, receiveTask);
+
+            await this.sendClient.CloseAsync();
         }
 
-        async Task SendMessagesAsync(string namespaceAddress, string queueName, string sendToken)
+        async Task SendMessagesAsync()
         {
-            var senderFactory = MessagingFactory.Create(
-                namespaceAddress,
-                new MessagingFactorySettings
-                {
-                    TransportType = TransportType.Amqp,
-                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
-                });
-     
-            var sender = await senderFactory.CreateMessageSenderAsync(queueName);
-
-
-            Console.WriteLine("Sending messages to Queue...");
-
             dynamic data = new[]
             {
                 new {name = "Einstein", firstName = "Albert"},
@@ -80,7 +77,7 @@ namespace MessagingSamples
                     TimeToLive = TimeSpan.FromMinutes(2)
                 };
 
-                await sender.SendAsync(message);
+                await this.sendClient.SendAsync(message);
                 lock (Console.Out)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -90,25 +87,14 @@ namespace MessagingSamples
             }
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken)
+        async Task ReceiveMessagesAsync()
         {
-            var receiverFactory = MessagingFactory.Create(
-                namespaceAddress,
-                new MessagingFactorySettings
-                {
-                    TransportType = TransportType.Amqp,
-                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
-                });
-   
-            var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
-
-            Console.WriteLine("Receiving message from Queue...");
             while (true)
             {
                 try
                 {
                     //receive messages from Queue
-                    var message = await receiver.ReceiveAsync(TimeSpan.FromSeconds(5));
+                    var message = await this.receiveClient.ReceiveAsync();
                     if (message != null)
                     {
                         if (message.Label != null &&
@@ -138,16 +124,15 @@ namespace MessagingSamples
                             }
                             await message.CompleteAsync();
                         }
-                        else
-                        {
-                            await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
-                        }
                     }
                     else
                     {
-                        //no more messages in the queue
                         break;
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 catch (MessagingException e)
                 {
@@ -158,8 +143,6 @@ namespace MessagingSamples
                     }
                 }
             }
-            await receiver.CloseAsync();
-            await receiverFactory.CloseAsync();
         }
     }
 }

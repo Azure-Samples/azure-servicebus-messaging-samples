@@ -1,8 +1,8 @@
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptDir = Split-Path $scriptPath
 
-Remove-Module Logging-ServiceBusRelaySamples -ErrorAction SilentlyContinue
-Import-Module "$scriptDir\Logging-ServiceBusRelaySamples.psm1" -Force
+Remove-Module Logging-ServiceBusMsgSamples -ErrorAction SilentlyContinue
+Import-Module "$scriptDir\Logging-ServiceBusMsgSamples.psm1" -Force
 
 Write-InfoLog "An info message." (Get-ScriptName) (Get-ScriptLineNumber)
 Write-SpecialLog "A special message." (Get-ScriptName) (Get-ScriptLineNumber)
@@ -25,5 +25,5 @@ catch
     Write-ErrorLog "An error has occurred." (Get-ScriptName) (Get-ScriptLineNumber) $_
 }
 
-Remove-Module Logging-ServiceBusRelaySamples
+Remove-Module Logging-ServiceBusMsgSamples
 #Remove-Item "run" -Recurse -Force -ErrorAction SilentlyContinue

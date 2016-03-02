@@ -18,19 +18,45 @@
 namespace MessagingSamples
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
     using Newtonsoft.Json;
 
-    public class Program : IBasicQueueConnectionStringSample
+    public class Program : IBasicTopicSendReceiveSample
     {
-        QueueClient sendClient;
-        QueueClient receiveClient;
-
-        async Task SendMessagesAsync()
+        public async Task Run(string namespaceAddress, string topicName, string sendToken, string receiveToken)
         {
+            var cts = new CancellationTokenSource();
+
+            await this.SendMessagesAsync(namespaceAddress, topicName, sendToken);
+
+            var allReceives = Task.WhenAll(
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription1", receiveToken, cts.Token, ConsoleColor.Cyan),
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription2", receiveToken, cts.Token, ConsoleColor.Green),
+                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription3", receiveToken, cts.Token, ConsoleColor.Yellow));
+            Console.WriteLine("\nEnd of scenario, press any key to exit.");
+            Console.ReadKey();
+
+            cts.Cancel();
+            await allReceives;
+        }
+
+        async Task SendMessagesAsync(string namespaceAddress, string topicName, string sendToken)
+        {
+            var senderFactory = MessagingFactory.Create(
+                namespaceAddress,
+                new MessagingFactorySettings
+                {
+                    TransportType = TransportType.Amqp,
+                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
+                });
+            var sender = await senderFactory.CreateMessageSenderAsync(topicName);
+
             dynamic data = new[]
             {
                 new {name = "Einstein", firstName = "Albert"},
@@ -56,7 +82,7 @@ namespace MessagingSamples
                     TimeToLive = TimeSpan.FromMinutes(2)
                 };
 
-                await this.sendClient.SendAsync(message);
+                await sender.SendAsync(message);
                 lock (Console.Out)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -66,10 +92,34 @@ namespace MessagingSamples
             }
         }
 
-        void InitializeReceiver()
+        async Task ReceiveMessagesAsync(string namespaceAddress, string topicName, string subscriptionName, string receiveToken, CancellationToken cancellationToken, ConsoleColor color)
         {
+            var receiverFactory = MessagingFactory.Create(
+                 namespaceAddress,
+                 new MessagingFactorySettings
+                 {
+                     TransportType = TransportType.Amqp,
+                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
+                 });
+
+           // var subscriptionPath = SubscriptionClient.FormatSubscriptionPath(topicName, subscriptionName);
+            //var receiver = await receiverFactory.CreateMessageReceiverAsync(subscriptionPath, ReceiveMode.PeekLock);
+
+            var receiver = receiverFactory.CreateSubscriptionClient(topicName, subscriptionName);
+
+
+            var doneReceiving = new TaskCompletionSource<bool>();
+            // close the receiver and factory when the CancellationToken fires 
+            cancellationToken.Register(
+                async () =>
+                {
+                    await receiver.CloseAsync();
+                    await receiverFactory.CloseAsync();
+                    doneReceiving.SetResult(true);
+                });
+
             // register the OnMessageAsync callback
-            this.receiveClient.OnMessageAsync(
+            receiver.OnMessageAsync(
                 async message =>
                 {
                     if (message.Label != null &&
@@ -83,7 +133,7 @@ namespace MessagingSamples
 
                         lock (Console.Out)
                         {
-                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.ForegroundColor = color;
                             Console.WriteLine(
                                 "\t\t\t\tMessage received: \n\t\t\t\t\t\tMessageId = {0}, \n\t\t\t\t\t\tSequenceNumber = {1}, \n\t\t\t\t\t\tEnqueuedTimeUtc = {2}," +
                                 "\n\t\t\t\t\t\tExpiresAtUtc = {5}, \n\t\t\t\t\t\tContentType = \"{3}\", \n\t\t\t\t\t\tSize = {4},  \n\t\t\t\t\t\tContent: [ firstName = {6}, name = {7} ]",
@@ -99,30 +149,15 @@ namespace MessagingSamples
                         }
                         await message.CompleteAsync();
                     }
+                    else
+                    {
+                        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
+                    }
                 },
                 new OnMessageOptions { AutoComplete = false, MaxConcurrentCalls = 1 });
+
+            await doneReceiving.Task;
         }
 
-
-        public async Task Run(string queueName, string connectionString)
-        {
-            Console.WriteLine("Press any key to exit the scenario");
-
-            this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
-            this.InitializeReceiver();
-
-            this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
-            var sendTask = this.SendMessagesAsync();
-
-            Console.ReadKey();
-
-            // shut down the receiver, which will stop the OnMessageAsync loop
-            await this.receiveClient.CloseAsync();
-
-            // wait for send work to complete if required
-            await sendTask;
-
-            await this.sendClient.CloseAsync();
-        }
     }
 }

@@ -18,45 +18,43 @@
 namespace MessagingSamples
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
     using Newtonsoft.Json;
 
-    public class Program : IBasicTopicSendReceiveSample
+    public class Program : IBasicTopicConnectionStringSample
     {
-        public async Task Run(string namespaceAddress, string topicName, string sendToken, string receiveToken)
+        TopicClient sendClient;
+        SubscriptionClient subscription1Client;
+        SubscriptionClient subscription2Client;
+        SubscriptionClient subscription3Client;
+
+        public async Task Run(string topicName, string connectionString)
         {
-            var cts = new CancellationTokenSource();
+            this.sendClient = TopicClient.CreateFromConnectionString(connectionString, topicName);
 
-            await this.SendMessagesAsync(namespaceAddress, topicName, sendToken);
+            this.subscription1Client = SubscriptionClient.CreateFromConnectionString(connectionString, topicName, "Subscription1");
+            this.subscription2Client = SubscriptionClient.CreateFromConnectionString(connectionString, topicName, "Subscription2");
+            this.subscription3Client = SubscriptionClient.CreateFromConnectionString(connectionString, topicName, "Subscription3");
 
-            var allReceives = Task.WhenAll(
-                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription1", receiveToken, cts.Token, ConsoleColor.Cyan),
-                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription2", receiveToken, cts.Token, ConsoleColor.Green),
-                this.ReceiveMessagesAsync(namespaceAddress, topicName, "Subscription3", receiveToken, cts.Token, ConsoleColor.Yellow));
+            this.InitializeReceiver(this.subscription1Client, ConsoleColor.Cyan);
+            this.InitializeReceiver(this.subscription2Client, ConsoleColor.Green);
+            this.InitializeReceiver(this.subscription3Client, ConsoleColor.Yellow);
+
+            await this.SendMessagesAsync();
+
             Console.WriteLine("\nEnd of scenario, press any key to exit.");
             Console.ReadKey();
 
-            cts.Cancel();
-            await allReceives;
+            await this.subscription1Client.CloseAsync();
+            await this.subscription2Client.CloseAsync();
+            await this.subscription3Client.CloseAsync();
         }
 
-        async Task SendMessagesAsync(string namespaceAddress, string topicName, string sendToken)
+        async Task SendMessagesAsync()
         {
-            var senderFactory = MessagingFactory.Create(
-                namespaceAddress,
-                new MessagingFactorySettings
-                {
-                    TransportType = TransportType.Amqp,
-                    TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
-                });
-            var sender = await senderFactory.CreateMessageSenderAsync(topicName);
-
             dynamic data = new[]
             {
                 new {name = "Einstein", firstName = "Albert"},
@@ -82,7 +80,7 @@ namespace MessagingSamples
                     TimeToLive = TimeSpan.FromMinutes(2)
                 };
 
-                await sender.SendAsync(message);
+                await this.sendClient.SendAsync(message);
                 lock (Console.Out)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -92,32 +90,8 @@ namespace MessagingSamples
             }
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string topicName, string subscriptionName, string receiveToken, CancellationToken cancellationToken, ConsoleColor color)
+        void InitializeReceiver(SubscriptionClient receiver, ConsoleColor color)
         {
-            var receiverFactory = MessagingFactory.Create(
-                 namespaceAddress,
-                 new MessagingFactorySettings
-                 {
-                     TransportType = TransportType.Amqp,
-                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
-                 });
-
-           // var subscriptionPath = SubscriptionClient.FormatSubscriptionPath(topicName, subscriptionName);
-            //var receiver = await receiverFactory.CreateMessageReceiverAsync(subscriptionPath, ReceiveMode.PeekLock);
-
-            var receiver = receiverFactory.CreateSubscriptionClient(topicName, subscriptionName);
-
-
-            var doneReceiving = new TaskCompletionSource<bool>();
-            // close the receiver and factory when the CancellationToken fires 
-            cancellationToken.Register(
-                async () =>
-                {
-                    await receiver.CloseAsync();
-                    await receiverFactory.CloseAsync();
-                    doneReceiving.SetResult(true);
-                });
-
             // register the OnMessageAsync callback
             receiver.OnMessageAsync(
                 async message =>
@@ -149,14 +123,8 @@ namespace MessagingSamples
                         }
                         await message.CompleteAsync();
                     }
-                    else
-                    {
-                        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
-                    }
                 },
                 new OnMessageOptions { AutoComplete = false, MaxConcurrentCalls = 1 });
-
-            await doneReceiving.Task;
         }
 
     }

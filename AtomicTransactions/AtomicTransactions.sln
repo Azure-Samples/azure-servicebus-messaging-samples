@@ -8,7 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Readme.htm = Readme.htm
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transactions", "Transactions.csproj", "{C0705BFD-2855-4753-83FA-0CB17C3AE5E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicTransactions", "AtomicTransactions.csproj", "{C0705BFD-2855-4753-83FA-0CB17C3AE5E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
