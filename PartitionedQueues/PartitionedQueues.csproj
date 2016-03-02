@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">Any CPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{247F0154-3F6B-409B-BEBA-1BF9302D3B9E}</ProjectGuid>
+    <ProjectGuid>{F6A41A8D-77CD-47F0-B564-BCFDC09F639C}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MessagingSamples</RootNamespace>
