@@ -28,7 +28,7 @@ PS C:\> Add-AzureAccount
 ``` 
 
 This will prompt you to log in with the account associated with your Azure subscription(s). The cached access token will eventually expire; when 
-tzhat happens you will be asked to run Add-AzureAccount again.  
+that happens you will be asked to run Add-AzureAccount again.  
 
 ### Setup      
 The [setup.ps1](setup.ps1) script will either use the account and subscription you have previously configured for your Azure Powershell environment
