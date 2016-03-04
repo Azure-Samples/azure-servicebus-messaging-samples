@@ -1,4 +1,4 @@
-#Getting Started with Service Bus Topics
+#Message Senders and Receivers with Service Bus Topics
 
 This sample shows how to interact with a Service Bus Topic via the ```MessagingFactory``` and the ```MessageSender``` 
 and ```MessageReceiver``` clients, as an alternative to the ``TopicClient`` and ``SubscriptionClient```class introduced in 

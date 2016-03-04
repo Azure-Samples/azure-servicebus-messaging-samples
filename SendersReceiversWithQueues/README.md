@@ -1,4 +1,4 @@
-#Message Senders and Receivesr with Service Bus Queues
+#Message Senders and Receivers with Service Bus Queues
 
 This sample shows interacting with Service Bus Queues using a set of API gestures that are more abstract but also a bit more
 flexible than the ``QueueClient`` class introduced in the basic [QueuesGettingStarted](../QueuesGettingStarted) sample. 
