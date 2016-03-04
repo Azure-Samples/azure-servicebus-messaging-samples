@@ -70,14 +70,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GeoReplication", "GeoReplic
 		GeoReplication\README.md = GeoReplication\README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "QueueReceiveLoop", "QueueReceiveLoop", "{AC2221C4-63C3-4405-BE08-7442D492BCA1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ReceiveLoop", "ReceiveLoop", "{AC2221C4-63C3-4405-BE08-7442D492BCA1}"
 	ProjectSection(SolutionItems) = preProject
-		QueueReceiveLoop\README.md = QueueReceiveLoop\README.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SubscriptionReceiveLoop", "SubscriptionReceiveLoop", "{5D99F596-6F3A-4C85-BDC9-8659C7614231}"
-	ProjectSection(SolutionItems) = preProject
-		SubscriptionReceiveLoop\README.md = SubscriptionReceiveLoop\README.md
+		ReceiveLoop\README.md = ReceiveLoop\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SendersReceiversWithQueues", "SendersReceiversWithQueues", "{C45FD2B7-2C7A-48F0-8966-F19D1B79B5A9}"
@@ -131,13 +126,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageBrowse", "MessageBro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prefetch", "Prefetch\Prefetch.csproj", "{1DC9882B-135C-462F-914B-AB004309E1FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueueReceiveLoop", "QueueReceiveLoop\QueueReceiveLoop.csproj", "{D5A260CB-5FED-40DB-9511-7A68CCFEA72E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceiveLoop", "ReceiveLoop\ReceiveLoop.csproj", "{D5A260CB-5FED-40DB-9511-7A68CCFEA72E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendersReceiversWithQueues", "SendersReceiversWithQueues\SendersReceiversWithQueues.csproj", "{285D8176-9724-4BFB-9336-58F2FB3B8512}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendersReceiversWithTopics", "SendersReceiversWithTopics\SendersReceiversWithTopics.csproj", "{C5AEC266-F2AB-403C-9F76-39A84614A367}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubscriptionReceiveLoop", "SubscriptionReceiveLoop\SubscriptionReceiveLoop.csproj", "{8CC3E99C-AC75-4320-8B12-B63FE27CA7F9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtomicTransactions", "AtomicTransactions\AtomicTransactions.csproj", "{28AEF962-E1B0-4003-8AAE-E876593F9CBB}"
 EndProject
