@@ -1,10 +1,12 @@
 #Getting Started with Service Bus Topics
 
-This sample shows how to interact with the essential API elements for interacting with a Service Bus Topic.
+This sample shows how to interact with a Service Bus Topic via the ```MessagingFactory``` and the ```MessageSender``` 
+and ```MessageReceiver``` clients, as an alternative to the ``TopicClient`` and ``SubscriptionClient```class introduced in 
+the basic [TopicGettingStarted](../TopicsGettingStarted) sample. 
 
-The sample is nearly identical to the [QueuesGettingStarted](../QueuesGettingStarted) sample since 
-the API gestures for interacting with queues and topics are indeed the same ones. In this document we will 
-therefore focus on the few differences between the samples. 
+The sample is quasi identical to the [SendersReceiversWithQueues](../SendersReceiversWithQueues) sample since 
+the API gestures for interacting with queues and topics through those API elements are the same. Showing that is the point 
+of these two samples and in this document we will therefore focus on the few differences. 
 
 ## Prerequisites and Setup
 
@@ -13,27 +15,13 @@ The application entry points are in [Main.cs](../common/Main.md), which is share
 reside in *Program.cs*, starting with ```Run()```.
 
 You can build the sample from the command line with the [build.bat](build.bat) or [build.ps1](build.ps1) scripts. This assumes that you
-have the .NET Build tools in the path. You can also open up the [QueuesGettingStarted.sln](QueuesGettingStarted.sln) solution file with Visual Studio and build.
+have the .NET Build tools in the path. You can also open up the [SendersReceiversWithTopics.sln](SendersReceiversWithTopics.sln) solution file with Visual Studio and build.
 With either option, the NuGet package manager should download and install the **WindowsAzure.ServiceBus** package containing the
 Microsoft.ServiceBus.dll assembly, including dependencies.
 
-## What is a Topic?
-
-Topics are very similar to queues. A topic has one "tail" for submitting messages, exactly like a queue, and it has zero or more named, 
-user-configurable, durably created, service-side "heads", called *subscriptions*, from which messages can be retrieved and which each act 
-like independent queues. 
-
-Conceptually, every existing subscription receives a copy of each message that is sent into the topic, so that each subscriber can independently 
-consume the complete message stream. Whether a message is selected into the subscription is determined by a filter condition; the default filter 
-condition allows any message. Filters are further illustrated in the [TopicFilters](../TopicFilters) sample.      
-
-> The factual implementation in Service Bus is more efficient than this conceptual idea. The message bodies are stored just once and 
-> only a subset of the message properties are copied for each subscription. If you are sending many messges with larger messages bodies, 
-> each of those message bodies therefore only counts once towards the topic's cumulative size quota.
-
 ## The Program
 
-The send-side of the sample is identical to the [QueuesGettingStarted](../QueuesGettingStarted) sample and therefore shows that
+The send-side of the sample is identical to the [SendersReceiversWithQueues](../SendersReceiversWithQueues) sample and therefore shows that
 queues and topics can be used interchangeably, and that an application's messaging topology can indeed be flexibly adjusted while 
 limiting or avoiding code churn.   
 
@@ -83,10 +71,10 @@ subscription rules at runtime. More on this in the [TopicFilters](../TopicFilter
 ## Run()
 
 The ```Run()``` method that is invoked by the common sample entry point first sends a few messages and kicks off the receivers for 
-three subscriptions in parallel. The messages received from the subscriptions will differ in color depending on which
-subscription tzhey were received from. 
+three subscriptions in parallel. The messages received from the subscriptions will differ in color, depending on which
+subscription they were received from. 
 
- The cancellation token passed to the receiver method is being triggered when the user presses any key sometime after sender and receiver have been kicked off. 
+The cancellation token passed to the receiver method is being triggered when the user presses any key sometime after sender and receiver have been kicked off. 
 
 ```C#
     public async Task Run(string namespaceAddress, string topicName, string sendToken, string receiveToken)
@@ -109,4 +97,4 @@ subscription tzhey were received from.
 
 ##Running the sample
 
-You can run the application from Visual Studio or on the command line from the sample's root directory by starting <code>bin/debug/sample.exe</code>
+You can run the application from Visual Studio or on the command line from the sample's root directory by starting <code>bin/debug/SendersReceiversWithTopics.exe</code>

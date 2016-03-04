@@ -1,6 +1,16 @@
-#Getting Started with Service Bus Queues
+#Message Senders and Receivesr with Service Bus Queues
 
-This sample shows the essential API elements for interacting with messages and a Service Bus Queue.
+This sample shows interacting with Service Bus Queues using a set of API gestures that are more abstract but also a bit more
+flexible than the ``QueueClient`` class introduced in the basic [QueuesGettingStarted](../QueuesGettingStarted) sample. 
+
+Specifically, this sample introduces the ```MessagingFactory``` and the ```MessageSender``` and ```MessageReceiver``` clients that 
+you can create from the factory. The advantage of using these client classses is that they work interchangeable across Queues 
+and Topics for sending and across Queues and Subvscriptions for receiving, and therefore provide agility with regards to the 
+messaging topology. 
+
+If you intially choose a Queue for a communication path, but later decide to switch to a Topic with multiple subscriptions to allow 
+further consumers to get the sender's messages, ```MessageSender``` and ```MessageReceiver``` based code can be used with that 
+new topology without changes except for configuring different paths.     
 
 You will learn how to establish a connection, and to send and receive messages, and you will learn about the most important 
 properties of Service Bus messages.
@@ -12,7 +22,7 @@ The application entry points are in [Main.cs](../common/Main.md), which is share
 reside in *Program.cs*, starting with ```Run()```.
 
 You can build the sample from the command line with the [build.bat](build.bat) or [build.ps1](build.ps1) scripts. This assumes that you
-have the .NET Build tools in the path. You can also open up the [QueuesGettingStarted.sln](QueuesGettingStarted.sln) solution file with Visual Studio and build.
+have the .NET Build tools in the path. You can also open up the [SendersReceiversWithQueues.sln](SendersReceiversWithQueues.sln) solution file with Visual Studio and build.
 With either option, the NuGet package manager should download and install the **WindowsAzure.ServiceBus** package containing the
 Microsoft.ServiceBus.dll assembly, including dependencies.
 
@@ -24,11 +34,13 @@ or services. For clarity, the send and receive activities are kept as separate a
 
 ### Sending Messages
 
-Sending messages requires a connection to Service Bus, which is managed by a *MessagingFactory*. The *MessagingFactory* serves as an anchor for connection
-management and as a factory for the various client objects that can interact with Service Bus entities. Connections to Service Bus are established
-"just in time" as soon as required (for instance when the first send or receive operation is initiated) and the connection is shared across all
-client objects created from the same ```MessagingFactory```, each having a separate link inside that connection. When the ```MessagingFactory``` is closed or
-aborted, all client operations across all client objects are aborted as well.
+Sending messages requires a connection to Service Bus, which is always managed by a *MessagingFactory*. That's also true when you use the ```QueueClient```
+as shown in the "getting started" sample, but in that case, a factory is created and managed for you. 
+
+The *MessagingFactory* serves as an anchor for connection management and as a factory for the various client objects that can interact with Service Bus 
+entities. Connections to Service Bus are established "just in time" when required, for instance when the first send or receive operation is initiated. 
+The connection is shared across all client objects created from the same ```MessagingFactory```, each having a separate link inside that connection. 
+When the ```MessagingFactory``` is closed or aborted, all client operations across all client objects are aborted as well.
 
 For the send operation, we create a new ```MessagingFactory``` and pass the namespace base address (typically ```sb://{namespace-name}.servicebus.windows.net```)
 and a set of ```MessagingFactorySettings```. The settings object is configured with the transport protocol type (AMQP 1.0) and with a token provider object
