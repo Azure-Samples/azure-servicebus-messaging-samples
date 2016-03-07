@@ -24,44 +24,38 @@ or services. For clarity, the send and receive activities are kept as separate a
 
 ### Sending Messages
 
-Sending messages requires a connection to Service Bus, which is managed by a *MessagingFactory*. The *MessagingFactory* serves as an anchor for connection
-management and as a factory for the various client objects that can interact with Service Bus entities. Connections to Service Bus are established
-"just in time" as soon as required (for instance when the first send or receive operation is initiated) and the connection is shared across all
-client objects created from the same ```MessagingFactory```, each having a separate link inside that connection. When the ```MessagingFactory``` is closed or
-aborted, all client operations across all client objects are aborted as well.
+The simplest way to interact with a Service Bus Queue is to create a ```QueueClient```instance from a Service Bus connection string, which is
+what this sample shows. The connection string for a Service Bus namespace can be easily obtained from the portal as illustrated in the 
+[main Service Bus documentation](https://azure.microsoft.com/en-us/documentation/articles/service-bus-dotnet-how-to-use-queues/).    
 
-For the send operation, we create a new ```MessagingFactory``` and pass the namespace base address (typically ```sb://{namespace-name}.servicebus.windows.net```)
-and a set of ```MessagingFactorySettings```. The settings object is configured with the transport protocol type (AMQP 1.0) and with a token provider object
-that wraps the SAS send token passed to the sample by the [entry point](../common/Main.md).
+> The connection string contains information about the Service Bus namespace address and commonly also holds the name and key for
+> a [Shared Access Signature (SAS) rule](https://azure.microsoft.com/en-us/documentation/articles/service-bus-authentication-and-authorization/).
+> Using the rule name and rule key and embedding the key inside an application or its configuration is largely similar to 
+> a username/password scheme, except that the SAS key is never directly transferred to the server, but used to create a signed token instead. 
+> For simple scenarios that have very few senders and receivers, and where the key, inside the connection string, can be well protected by the 
+> app, using connecting strings is the simplest choice. 
+> For scenarios with many senders and receivers, or scenarios where the key cannot be well protected, clients will not hold the key, but will 
+> be handling a previously issued, time-limited token as you can see in most of the other samples in this repository. 
 
-```C#
-async Task SendMessagesAsync(string namespaceAddress, string queueName, string sendToken)
-{
-    var senderFactory = MessagingFactory.Create(
-        namespaceAddress,
-        new MessagingFactorySettings
-        {
-            TransportType = TransportType.Amqp,
-            TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
-        });
-```
-
-All client objects created through this factory will be initialized with a default "retry policy" and will automatically perform
-retries following the rules of the policy when transient errors occur. The policy can be overriden using the ```RetryPolicy``` property: 
-
-``` C#
-// this line is not in the code sample. Only set or override when you have good reason to do so
-senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(30), 10);
-```
-
-From the factory we next create a ```MessageSender```, which can send messages to Queues and Topics. We could also create a ```QueueClient```,
-which is the client object specialized for Queues, but the generic message sender is the more flexible option.
+For the send operation, we create a new ```QueueClient``` and pass the connection string and the queue name. 
 
 ```C#
-var sender = await senderFactory.CreateMessageSenderAsync(queueName);
+ this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
 ```
 
-With the message sender in hands, we proceed to create a few messages (snippet below is abridged) and send them.
+As you can see, the client object reference is assigned to a field of the class, which is done here intentionally to signal 
+that applications **shall hold on to any Service Bus client objects for as long as possible** and preferably for the lifetime 
+of the application. 
+
+We **discourage** usage patterns where a QueueClient is created to send a single message and then torn 
+down again, just to do this again for the next message. It's very tempting to do this in request handler methods for web sites and 
+services since it looks easy, but the recommendation is to anchor a shared object on the web application state or object. The 
+```QueueClient``` object can be safely used for sending messages from concurrent asynchronous operations and multiple threads.    
+
+All client objects are automatically initialized with a default "retry policy" and will automatically perform
+retries when transient errors occur.  
+
+With the ```QueueClient``` created, we proceed to make a few messages (snippet below is abridged) and send them.
 
 In this example we use the Newtonsoft JSON.NET serializer to turn a dynamic object into JSON format, then encode the resulting
 text as UTF-8, and pass the resulting byte stream into the body of the message. We then set the message's ```ContentType``` property
@@ -81,7 +75,7 @@ The example also sets
 * the ```TimeToLive``` property, which causes the message to expire and be automatically garbage collected from the Queue
   when expired. We set this here so that we don't accumulate many stale messages in the demo queue as you experiment.
 
-All properties are optional to set.
+All these properties are optional to set.
 
 ```C#
 dynamic data = new[]
@@ -111,64 +105,32 @@ We deliberately don't wrap this operation into a ```try/catch``` block as one wo
 if the sample fails sending to the queue after all retries have been exhausted it will terminate with an exception. 
 
 ```C#
-        await sender.SendAsync(message);
+        await sendClient.SendAsync(message);
     }
 ```
 
 ## Receiving Messages
 
-The message receiver side also requires a ```MessagingFactory``` that we construct just like for the sender. The only difference,
-not even really apparent, is that we pass a token that confers receive ("Listen") permission on the Queue. Everything else,
-except names, is the same as on the send side.
+The message receiver side also requires a ```QueueClient``` that we construct just like for the sender. The reason we 
+create two identical objects here is that we show in one compact program what would usually happen in two distinct
+places. It's uncommon (except in very special and advanced cases discussed in a [different sample](../AtomicTransactions))
+for one application module or service to send and receive messages from the same queue, so we keep those paths separate here 
+as well.  
 
 ```C#
-async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken, CancellationToken cancellationToken)
-{
-    var receiverFactory = 
-        MessagingFactory.Create(
-            namespaceAddress,
-            new MessagingFactorySettings
-            {
-                TransportType = TransportType.Amqp,
-                TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
-            });
+  this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName, ReceiveMode.PeekLock);
 ```
 
-As you might expect, we'll now create a receiver object. Like with send, we could use the ```QueueClient```, but we create a generic
-```MessageReceiver``` that could also receive from a Topic Subscription when given the correct path. 
-
-Note that the receiver is created with the ```PeekLock``` receive mode. This mode will pass the message to the receiver while the broker maintains a lock on
+Note that the ```QueueClient``` is created with the ```PeekLock``` receive mode. This mode will pass the message to the receiver while the broker maintains a lock on
 the message and hold on to the message. If the message has not been completed, deferred, deadlettered, or abandoned during the
 lock timeout period (all concepts explained in this set of samples), the message will again appear in the Queue (or the Topic Subscription) for retrieval. 
 
-This is different from the ```ReceiveAndDelete``` alternative where the message has been deleted as it arrives at the receiver. In this example, the
-message is either completed or deadlettered as you will see further below.
-
-```C#
-var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
-```
-
-Since we want to illustrate an application here that continuously processes messages, we also need a way for the application
-to state when to stop. You may have noticed the ```cancellationToken``` that's passed into the hosting function. We will now register
-a callback on that token for signaling when the caller wants the message processing to end, and in that we will close the receiver
-and also the messaging factory. We also complete a ```TaskCompletionSource``` instance that will signal when this method can exit
-after all work has ended.
-
-``` C#
-var doneReceiving = new TaskCompletionSource<bool>();
-cancellationToken.Register(
-    async () =>
-    {
-        await receiver.CloseAsync();
-        await receiverFactory.CloseAsync();
-        doneReceiving.SetResult(true);
-    });
-```
+This is different from the ```ReceiveAndDelete``` alternative where the message has already been deleted as it arrives at the receiver. 
 
 Now we start the message receive loop. As explicit receive loops (see the [ReceiveLoop](../ReceiveLoop) sample) can be tricky,
-the vast majority of applications will *and should* instead use the ```OnMessage(Async)``` API. 
+the vast majority of applications will *and should* instead use the ```OnMessage``` or ```OnMessageAsync``` API. 
 
-> Unless you have good reason to create your own receive loop, you should use the OnMessage API.
+> **Unless you have good reason to create your own receive loop, you should use the ```OnMessage```/``ÒnMessageAsync``` API**
 
 The ```OnMessage(Async)``` method accepts a callback function for handling a single message, and a set of options:
 
@@ -184,7 +146,7 @@ The ```OnMessage(Async)``` method accepts a callback function for handling a sin
 * The ```AutoRenewTimeout``` option (not shown here) is discussed in the [LockRenewal](../LockRenewal) sample
    
 The asynchronous variant ```OnMessageAsync``` used here accepts an asynchronous callback method, it is not an asynchronous, awaitable method by itself. 
-You should prefer the asynchronous variant whenever possible. 
+**You should prefer the asynchronous variant whenever possible**. 
 
 > The callback acts as a throttle for message acquisition. In principle, the receive loop will receive one message, then call 
 > the callback with that message for processing, handle completion of the message, and only then receive the next message. With 
@@ -192,9 +154,9 @@ You should prefer the asynchronous variant whenever possible.
 > model is *push-like*, the pace at which messages are acquired therefore directly depends on the pace of processing and not on
 > the achievable message flow rate. 
 
-The receive loop will be started as soon as ```OnMessage(Async)``` is invoked and will continue in the background when the method 
-has returned. OnMessage can only be called once on any receiver. The receive loop stops when the receiver is being closed or when
-the spawning MessagingFactory is closed.
+The receive loop will be started as soon as ```OnMessageAsync``` is invoked and will continue in the background when the method 
+has returned. ```OnMessage```/``OnMessageAsync``` can only be called once on any receiver. The receive loop stops when the ````QueueClient```is 
+closed via ```Close()```/```CloseAsync()```. 
 
 > The callback is not invoked on the calling thread. For applications that need synchronization with an UI thread or similar, like 
 > applications written for Windows Forms or WPF, all message handling should be done in the callback and the *result* of the 
@@ -203,7 +165,7 @@ the spawning MessagingFactory is closed.
 Here's the ```OnMessageAsync``` invocation as used in this sample. The callback code is explained below.
 
 ``` C#
-    receiver.OnMessageAsync(
+    receiveClient.OnMessageAsync(
         async message =>
         {
             ... the handling code is explained below ...
@@ -257,52 +219,49 @@ those properties that the broker sets or modifies as the message passes through:
     }
 ```
 
-Now that we're done with "processing" the message, we tell the broker about that being the case. The ```Complete(Async)```
+Now that we're done with "processing" the message, we tell the broker about that being the case. The ```Complete```/```CompleteAsync```
 operation will settle the message transfer with the broker and remove it from the Queue. 
 
-If the message does not meet our processing criteria, we will deadletter it, meaning it is put into a special queue for 
-handling defective messages. The broker will automatically deadletter the message if delivery has been attempted too many times.
-You can find out more about this in the [Deadletter](../Deadletter) sample.
 
 ``` C#
-        await message.CompleteAsync();
-    }
-    else
-    {
-        await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
-    }
-```
-
-The ```ReceiveMessagesAsync``` method closes with an await statement that will wait for completion of the ```TaskCompletionSource```
-we initialized above and that will be set (and therefore unblock this wait) once the cancellation token fires and procesisng stops.
-
-``` C#
-  await doneReceiving.Task;
+    await message.CompleteAsync();
 ```
 
 ## Run()
 
-The Run() method that is invoked by the common sample entrypoint starts sender and receiver in parallel and waits for 
-both to complete before exiting. The cancellation token passed to the receiver method is being triggered when the 
-user presses any key sometime after sender and receiver have been kicked off. 
+The ```Run()``` method that is invoked by the common sample entrypoint and is where the client objects get intialized as 
+previously discussed. The receive client gets created and is then initialized with the ``OnMessageAsync`` callback, which 
+starts a receive loop. The send client gets created and then asynchronously sends a few messages. 
 
 ```C#
-    public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
-    {
-        Console.WriteLine("Press any key to exit the scenario");
+ public async Task Run(string queueName, string connectionString)
+{
+    Console.WriteLine("Press any key to exit the scenario");
 
-        var cts = new CancellationTokenSource();
+    this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName, ReceiveMode.PeekLock);
+    this.InitializeReceiver();
 
-        var sendTask = this.SendMessagesAsync(namespaceAddress, queueName, sendToken);
-        var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken, cts.Token);
+    this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
+    var sendTask = this.SendMessagesAsync();
+```
 
-        Console.ReadKey();
-        cts.Cancel();
+As the user presses any key, the ```receiveClient``` is closed, which stops the ```OnMessageAsync``` receive loop. If 
+sending the messages has not yet completed, we'll wait for the send task to cleanly exit and then close the send client.    
 
-        await Task.WhenAll(sendTask, receiveTask);
-    } 
+
+```C#
+    Console.ReadKey();
+
+    // shut down the receiver, which will stop the OnMessageAsync loop
+    await this.receiveClient.CloseAsync();
+
+    // wait for send work to complete if required
+    await sendTask;
+
+    await this.sendClient.CloseAsync();
+}
 ```
 
 ##Running the sample
 
-You can run the application from Visual Studio or on the command line from the sample's root directory by starting <code>bin/debug/sample.exe</code>
+You can run the application from Visual Studio or on the command line from the sample's root directory by starting ```bin/debug/QueuesGettingStarted.exe```

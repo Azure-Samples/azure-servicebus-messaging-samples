@@ -18,15 +18,21 @@
 namespace MessagingSamples
 {
     using System;
+    using System.Threading;
     using Microsoft.ServiceBus;
 
     public class DelegatingTokenProvider : TokenProvider
     {
         TokenProvider tokenProvider;
+        readonly ReaderWriterLockSlim rwl = new ReaderWriterLockSlim();
 
         public DelegatingTokenProvider(TokenProvider tokenProvider)
             : base(tokenProvider.CacheTokens, tokenProvider.IsWebTokenSupported, tokenProvider.CacheSize, tokenProvider.TokenScope)
         {
+            if (tokenProvider == null)
+            {
+                throw new ArgumentNullException();
+            }
             this.tokenProvider = tokenProvider;
         }
 
@@ -35,32 +41,79 @@ namespace MessagingSamples
             get { return this.tokenProvider; }
             set
             {
-                this.tokenProvider = value;
-                this.CacheSize = this.tokenProvider.CacheSize;
-                this.CacheTokens = this.tokenProvider.CacheTokens;
+                if (value == null)
+                {
+                    throw new ArgumentNullException();
+                }
+                try
+                {
+                    this.rwl.EnterWriteLock();
+
+                    this.tokenProvider = value;
+                    this.CacheSize = this.tokenProvider.CacheSize;
+                    this.CacheTokens = this.tokenProvider.CacheTokens;
+                }
+                finally
+                {
+                    this.rwl.ExitWriteLock();
+                }
             }
         }
 
         protected override IAsyncResult OnBeginGetToken(string appliesTo, string action, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return this.tokenProvider.BeginGetToken(appliesTo, action, false, timeout, callback, state);
+            this.rwl.EnterReadLock();
+            try
+            {
+                return this.tokenProvider.BeginGetToken(appliesTo, action, false, timeout, callback, state);
+            }
+            catch
+            {
+                this.rwl.ExitReadLock();
+                throw;
+            }
         }
 
         protected override IAsyncResult OnBeginGetWebToken(string appliesTo, string action, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return this.tokenProvider.BeginGetWebToken(appliesTo, action, false, timeout, callback, state);
+            this.rwl.EnterReadLock();
+            try
+            {
+                this.rwl.EnterReadLock();
+                return this.tokenProvider.BeginGetWebToken(appliesTo, action, false, timeout, callback, state);
+            }
+            catch
+            {
+                this.rwl.ExitReadLock();
+                throw;
+            }
         }
 
         protected override System.IdentityModel.Tokens.SecurityToken OnEndGetToken(IAsyncResult result, out DateTime cacheUntil)
         {
-            cacheUntil = DateTime.MinValue;
-            return this.tokenProvider.EndGetToken(result);
+            try
+            {
+                cacheUntil = DateTime.MinValue;
+                return this.tokenProvider.EndGetToken(result);
+            }
+            finally
+            {
+                this.rwl.ExitReadLock();
+            }
+
         }
 
         protected override string OnEndGetWebToken(IAsyncResult result, out DateTime cacheUntil)
         {
-            cacheUntil = DateTime.MinValue;
-            return this.tokenProvider.EndGetWebToken(result);
-        }
+            try
+            {
+                cacheUntil = DateTime.MinValue;
+                return this.tokenProvider.EndGetWebToken(result);
+            }
+            finally
+            {
+                this.rwl.ExitReadLock();
+            }
+}
     }
 }

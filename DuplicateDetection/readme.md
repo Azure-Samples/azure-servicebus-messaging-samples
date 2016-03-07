@@ -25,7 +25,7 @@ the sender re-send the same message and the queue tossing out any duplicate copy
 ## How do I turn it on?
 
 The feature can be turned on setting [```QueueDescription.RequiresDuplicateDetection```](https://msdn.microsoft.com/library/azure/microsoft.servicebus.messaging.queuedescription.requiresduplicatedetection.aspx) or
-[```TopicDescription.RequiresDuplicateDetectio```n]() to ```true``` when creating a queue or topic.  
+[```TopicDescription.RequiresDuplicateDetection```]() to ```true``` when creating a queue or topic.  
 
 The sample's setup script creates a queue with this property turned on and this sample uses that queue.
 

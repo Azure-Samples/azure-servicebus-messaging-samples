@@ -29,6 +29,27 @@ namespace MessagingSamples
         QueueClient sendClient;
         QueueClient receiveClient;
 
+        public async Task Run(string queueName, string connectionString)
+        {
+            Console.WriteLine("Press any key to exit the scenario");
+
+            this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName, ReceiveMode.PeekLock);
+            this.InitializeReceiver();
+
+            this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
+            var sendTask = this.SendMessagesAsync();
+
+            Console.ReadKey();
+
+            // shut down the receiver, which will stop the OnMessageAsync loop
+            await this.receiveClient.CloseAsync();
+
+            // wait for send work to complete if required
+            await sendTask;
+
+            await this.sendClient.CloseAsync();
+        }
+        
         async Task SendMessagesAsync()
         {
             dynamic data = new[]
@@ -97,32 +118,13 @@ namespace MessagingSamples
                                 scientist.name);
                             Console.ResetColor();
                         }
-                        await message.CompleteAsync();
                     }
+                    await message.CompleteAsync();
                 },
                 new OnMessageOptions { AutoComplete = false, MaxConcurrentCalls = 1 });
         }
 
 
-        public async Task Run(string queueName, string connectionString)
-        {
-            Console.WriteLine("Press any key to exit the scenario");
 
-            this.receiveClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
-            this.InitializeReceiver();
-
-            this.sendClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
-            var sendTask = this.SendMessagesAsync();
-
-            Console.ReadKey();
-
-            // shut down the receiver, which will stop the OnMessageAsync loop
-            await this.receiveClient.CloseAsync();
-
-            // wait for send work to complete if required
-            await sendTask;
-
-            await this.sendClient.CloseAsync();
-        }
     }
 }

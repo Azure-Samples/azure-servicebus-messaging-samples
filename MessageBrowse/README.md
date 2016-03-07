@@ -5,7 +5,7 @@ purposes and/or for tooling built on top of Service Bus.
 
 ## How does Peek work?
 
-The ```Peek```/```PeekAsync``` and ```PeekBatch```/```PeekAsync``` methods exists on all receiver objects: ```MessageReceiver```, ```MessageSession```, ```QueueClient```, and ```SubscriptionClient```.
+The ```Peek```/```PeekAsync``` and ```PeekBatch```/```PeekAsync``` methods exist on all receiver objects: ```MessageReceiver```, ```MessageSession```, ```QueueClient```, and ```SubscriptionClient```.
 Peek works on all queues and subscriptions and their respective deadletter queues.
 
 When called repeatedly, the ```Peek``` method enumerates all messages that exist in the queue's or subscription's log, in sequence number order, from the 

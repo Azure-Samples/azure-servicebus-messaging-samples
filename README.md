@@ -28,7 +28,7 @@ PS C:\> Add-AzureAccount
 ``` 
 
 This will prompt you to log in with the account associated with your Azure subscription(s). The cached access token will eventually expire; when 
-tzhat happens you will be asked to run Add-AzureAccount again.  
+that happens you will be asked to run Add-AzureAccount again.  
 
 ### Setup      
 The [setup.ps1](setup.ps1) script will either use the account and subscription you have previously configured for your Azure Powershell environment
@@ -76,10 +76,10 @@ model is strongly encouraged at all times as it yields significantly more effici
 ###Basic Message Handling
 
 * **Senders and Receivers with Queues** - The [SendersReceiversWithQueues](./SendersReceiversWithQueues) sample shows how to use the 
-  ``MessagingFactory```for explicit connection management and the generic ```MessageSender```and ```MessageReceiver``` abstractions with queues. 
+  ```MessagingFactory```for explicit connection management and the generic ```MessageSender``` and ```MessageReceiver``` abstractions with queues. 
 * **Senders and Receivers with with Topics** - The [SendersReceiversWithTopics](./SendersReceiversWithTopics) sample is a variation of 
    the [SendersReceiversWithQueues](./SendersReceiversWithQueues) sample and shows how nearly identical code can be use with Queues and Topics
-   when using the ```MessageSender```and ```MessageReceiver``` abstractions.  
+   when using the ```MessageSender``` and ```MessageReceiver``` abstractions.  
 * **Receive Loop** - [ReceiveLoop](./ReceiveLoop) shows how to use an explicit receive loop with a queues instead of the 
    recommended, callback-based OnMessage(Async) API used in the "getting started" sample.
 * **Message Prefetching** - The [Prefetch](./Prefetch) sample shows the difference between having "prefetch" turned on or off for the receiver. 

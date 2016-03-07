@@ -121,8 +121,8 @@ namespace MessagingSamples
                                 scientist.name);
                             Console.ResetColor();
                         }
-                        await message.CompleteAsync();
                     }
+                    await message.CompleteAsync();
                 },
                 new OnMessageOptions { AutoComplete = false, MaxConcurrentCalls = 1 });
         }
