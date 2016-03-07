@@ -53,9 +53,13 @@ namespace MessagingSamples
             receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
 
             var sender = await senderFactory.CreateMessageSenderAsync(queueName);
+            
+            // MaxDeliveryCount scenario
+            await this.SendMessagesAsync(sender, 1);
+            await this.ExceedMaxDelivery(receiverFactory, queueName);
 
-
-            var sendTask = this.SendMessagesAsync(sender);
+            // Fixup scenario
+            var sendTask = this.SendMessagesAsync(sender, int.MaxValue);
             var receiveTask = this.ReceiveMessagesAsync(receiverFactory, queueName, cts.Token);
             var fixupTask = this.PickUpAndFixDeadletters(receiverFactory, queueName, sender, cts.Token);
 
@@ -65,7 +69,7 @@ namespace MessagingSamples
             await Task.WhenAll(sendTask, receiveTask);
         }
 
-        async Task SendMessagesAsync(MessageSender sender)
+        async Task SendMessagesAsync(MessageSender sender, int maxMessages)
         {
             dynamic data = new[]
             {
@@ -82,7 +86,7 @@ namespace MessagingSamples
             };
 
 
-            for (int i = 0; i < data.Length; i++)
+            for (int i = 0; i < Math.Min(data.Length, maxMessages); i++)
             {
                 var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data[i]))))
                 {
@@ -98,6 +102,42 @@ namespace MessagingSamples
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Message sent: Id = {0}", message.MessageId);
                     Console.ResetColor();
+                }
+            }
+        }
+
+        async Task ExceedMaxDelivery(MessagingFactory receiverFactory, string queueName)
+        {
+            var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
+
+            while(true)
+            {
+                var msg = await receiver.ReceiveAsync(TimeSpan.Zero);
+                if (msg != null)
+                {
+                    await msg.AbandonAsync();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            var deadletterReceiver = await receiverFactory.CreateMessageReceiverAsync(QueueClient.FormatDeadLetterPath(queueName), ReceiveMode.PeekLock);
+            while (true)
+            {
+                var msg = await deadletterReceiver.ReceiveAsync(TimeSpan.Zero);
+                if (msg != null)
+                {
+                    foreach (var prop in msg.Properties)
+                    {
+                        Console.WriteLine("{0}={1}", prop.Key, prop.Value);
+                    }
+                    await msg.CompleteAsync();
+                }
+                else
+                {
+                    break;
                 }
             }
         }
