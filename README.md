@@ -73,7 +73,7 @@ model is strongly encouraged at all times as it yields significantly more effici
 * **Getting Started with Topics** - The [TopicsGettingStarted](./TopicsGettingStarted) sample illustrates the basic gestures for sending
   messages into Topics and receiving them from Subscriptions.
   
-###Basic Message Handling
+### Message Handling
 
 * **Senders and Receivers with Queues** - The [SendersReceiversWithQueues](./SendersReceiversWithQueues) sample shows how to use the 
   ```MessagingFactory```for explicit connection management and the generic ```MessageSender``` and ```MessageReceiver``` abstractions with queues. 
@@ -90,6 +90,7 @@ model is strongly encouraged at all times as it yields significantly more effici
   flag is turned on for a Queue or Topic.
 * **Message Browsing** - [MessageBrowse](./MessageBrowse) shows how to enumerate all messages residing in a Queue or Subscription without receiving
   or locking them. This method also allows finding deferred and scheduled messages.
+* **Auto Forward** - [AutoForward](./AutoForward) illustrates how and why to use automatic forwarding between entities in Service Bus.
   
 ### Topics and Subscriptions
 

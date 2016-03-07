@@ -28,6 +28,7 @@ namespace MessagingSamples
 
         public async Task Run(string namespaceAddress, string manageToken)
         {
+            Console.WriteLine("\nCreating topology\n");
             this.sharedAccessRuleKey = SharedAccessAuthorizationRule.GenerateRandomKey();
             var namespaceManageTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(manageToken);
 
@@ -71,6 +72,8 @@ namespace MessagingSamples
                 ? await namespaceManager.UpdateQueueAsync(forwardingQueue)
                 : await namespaceManager.CreateQueueAsync(forwardingQueue);
 
+
+            Console.WriteLine("\nSending messages\n");
 
             var topicFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider("SendKey", this.sharedAccessRuleKey));
             var topicSender = await topicFactory.CreateMessageSenderAsync(topic.Path);

@@ -9,7 +9,7 @@ When the feature is enabled, Service Bus automatically moves any messages arrivi
 The forwarding implementation is transactional and prevents duplication or message loss. The destination Queue or Topic can still be sent to by other senders; 
 the source Queue or Subscription can no longer be used for client receive operations.    
 
-To forward messages from a Queue or Subscription to a destination, set the ```QueueDescription.ForwardTo``` or SubscriptionDescription.ForwardTo``` property to the path of the 
+To forward messages from a Queue or Subscription to a destination, set the ```QueueDescription.ForwardTo``` or ```SubscriptionDescription.ForwardTo``` property to the path of the 
 destination entity. 
 
 > Note that the destination Queue/Topic must already exist at the time you create or update the source Queue/Subscription. When 
