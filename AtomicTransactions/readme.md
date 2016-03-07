@@ -125,7 +125,7 @@ transfer queue. You will obviously also have a receiver that pulls messages from
 A simple transaction then uses these elements as follows:
 
 ```C#
-   var msg = reciever.Receive();
+   var msg = receiver.Receive();
    
    using ( scope = new TransactionScope() )
    {
