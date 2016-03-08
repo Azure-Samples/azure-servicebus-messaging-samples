@@ -115,6 +115,7 @@ namespace MessagingSamples
                 var msg = await receiver.ReceiveAsync(TimeSpan.Zero);
                 if (msg != null)
                 {
+                    Console.WriteLine("Picked up message; DeliveryCount {0}", msg.DeliveryCount);
                     await msg.AbandonAsync();
                 }
                 else
@@ -129,6 +130,7 @@ namespace MessagingSamples
                 var msg = await deadletterReceiver.ReceiveAsync(TimeSpan.Zero);
                 if (msg != null)
                 {
+                    Console.WriteLine("Deadletter message:");
                     foreach (var prop in msg.Properties)
                     {
                         Console.WriteLine("{0}={1}", prop.Key, prop.Value);
