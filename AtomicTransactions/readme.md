@@ -270,9 +270,9 @@ abstraction", but the declared intent for this sample is not to hide too much de
 
 ### Configuring Flow and Running the Saga
 
-The ```RunScenarioAsync`` method is the scenario host. It creates and initializes the receiver on the 
+The ```RunScenarioAsync``` method is the scenario host. It creates and initializes the receiver on the 
 "output" queue where all results land, then initializes and hosts the Saga (see below), and then proceeds to
-submitting the booking jobs into the Saga.  The ```SendBookingRequests```method creates some input example 
+submitting the booking jobs into the Saga.  The ```SendBookingRequests``` method creates some input example 
 data and submits it as messages into the "input" queue. The jobs don't need to always request car and hotel 
 and air together, but can also request any other combination.       
 
