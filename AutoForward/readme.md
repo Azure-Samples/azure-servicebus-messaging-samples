@@ -16,7 +16,7 @@ destination entity.
 > creating the forwarding rule, the caller must have "Manage" rights on both entities. When sending messages, the sender does 
 > not need any permissions on any chained destination Queues.
 
-Auto-Forwarding is also available for Deadletter Queues, by setting the ```QueueDescription.ForwardDeadLetteredMessagesTo``` or ```SubscriptionDescription.ForwardDeadLetteredMessagesTo``` properties. 
+Auto-Forwarding is also available for dead-letter queues, by setting the ```QueueDescription.ForwardDeadLetteredMessagesTo``` or ```SubscriptionDescription.ForwardDeadLetteredMessagesTo``` properties. 
 
 ##Why would I use it?
 
@@ -117,7 +117,7 @@ into a shared Audit Queue that captures all raw messages:
 ```     
 
 For Topics with a large or fairly dynamic number of subscriptions, the Fan-In pattern is very handy for consolidation
-of the deadletter queues, of which one exists for each subscription.
+of the dead-letter queues, of which one exists for each subscription.
 
 ```
                       SubscriptionDescription.ForwardDeadLetteredMessagesTo = "Q" 
@@ -230,7 +230,7 @@ sourceQueueDescription.ForwardTo = DestinationQueueName;
 namespaceManager.CreateQueue(sourceQueueDescription);
 ```
 
-To forward messages from a deadletter queue, set the QueueDescription.ForwardDeadLetteredMessagesTo property 
+To forward messages from a dead-letter queue, set the QueueDescription.ForwardDeadLetteredMessagesTo property 
 to the path of destination queue or topic. Again, Service Bus requires the sender to attach a token that indicates 
 that the sender has send permissions on the source topic. The sender does not need any permissions on the destination queue.
 
@@ -240,5 +240,3 @@ sourceQueueDescription.ForwardDeadLetteredMessagesTo = DestinationQueue.Path;
 namespaceManager.CreateQueue(sourceQueueDescription);
 ```
 
-##More Information
-For more information on Autoforwarding, see Chaining Service Bus Entities with Auto-forwarding.
