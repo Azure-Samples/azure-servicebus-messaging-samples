@@ -1,19 +1,19 @@
-# Deadletter Queues
+# Dead-Letter Queues
 
-This sample shows how to move messages to the *Deadletter* queue, how to retrieve messages from it, and resubmit corrected message back into the main queue.
+This sample shows how to move messages to the Dead-letter queue, how to retrieve messages from it, and resubmit corrected message back into the main queue.
 
-## What is a Deadletter Queue?
+## What is a Dead-Letter Queue?
 
-All Service Bus Queues and Subscriptions have a secondary sub-queue, called the *Deadletter Queue*. This sub-queue does not need to be explicitly 
+All Service Bus Queues and Subscriptions have a secondary sub-queue, called the *Dead-Letter Queue*. This sub-queue does not need to be explicitly 
 created and cannot be deleted or otherwise managed independent of the main entity.
 
-The purpose of the Deadletter Queue (DLQ) is accept and hold messages that cannot be delivered to any receiver or messages that could not be processed.
+The purpose of the Dead-Letter Queue (DLQ) is accept and hold messages that cannot be delivered to any receiver or messages that could not be processed.
 Messages can then be taken out of the DLQ and inspected. An application might, potentially with help of an operator, correct issues and 
 resubmit the message, log the fact that there was an error, or take corrective action. (The latter is shown in the [AtomicTransactions](../AtomicTransactions) 
 sample where DLQs are used to initiate compensating work of a Saga)
 
 From an API and protocol perspective, the DLQ is mostly like any other queue, except that messages can only be submitted via the 
-deadletter-gesture of the parent entity, that time-to-live is not observed, and that you can't deadletter from a DLQ. The deadletter
+dead-letter-gesture of the parent entity, that time-to-live is not observed, and that you can't dead-letter from a DLQ. The dead-letter
 queue fully supports peek-lock delivery and transactional operations.
 
 **Important:** There is no automatic cleanup of the DLQ. Messages remain in the DLQ until they are   
@@ -29,7 +29,7 @@ As the message gets moved by the broker, two properties are added to the message
 | Property Name              | Description                                               |
 |----------------------------|-----------------------------------------------------------|
 | DeadLetterReason           | System-defined or application-defined text code declaring |
-|                            | why the message has been deadlettered. System-defined     |
+|                            | why the message has been dead-lettered. System-defined    |
 |                            | codes are:                                                | 
 |                            | * MaxDeliveryCountExceeded - max delivery count reached   |
 |                            | * TTLExpiredException - time-to-live expired              |
@@ -59,16 +59,16 @@ main Queue or Subscription; that behavior is by design.
 When ```SubscriptionDescriptionEnableDeadLetteringOnFilterEvaluationExceptions```is turned on for a subscription, any errors that occur while a
 subscription's SQL filter rule executes are being captured in the DLQ along with the offending message.
 
-### Application-Level Deadlettering
+### Application-Level Dead-Lettering
 
-In addition to these system-provided deadlettering features, applications can use the DLQ explicitly to reject unacceptable messages. 
+In addition to these system-provided dead-lettering features, applications can use the DLQ explicitly to reject unacceptable messages. 
 This may include messages that cannot be properly processed due to any sort of system issue, messages that hold malformed payloads, or messages that fail 
 authentication when some message-level security scheme is used.
 
 ##The Sample
 
-The sample illustrates system-initiated deadlettering after exceeding the default ```QueueDescription.MaxDeliveryCount``` of 10 and
-an application-initiated deadlettering action.
+The sample illustrates system-initiated dead-lettering after exceeding the default ```QueueDescription.MaxDeliveryCount``` of 10 and
+an application-initiated dead-lettering action.
 
 The sample is based on the [SendersReceiversWithQueues](../SendersReceiversWithQueues) baseline sample where the basic elements are explained; 
 the shown API gestures also work with Topic subscriptions.
@@ -119,11 +119,11 @@ DLQ path for a subscription, you can also use ```SuubscriptionClient.FormatDeadL
 
 ```C#        
 
-        var deadletterReceiver = await receiverFactory.CreateMessageReceiverAsync(
+        var dead-letterReceiver = await receiverFactory.CreateMessageReceiverAsync(
                 QueueClient.FormatDeadLetterPath(queueName), ReceiveMode.PeekLock);
         while (true)
         {
-            var msg = await deadletterReceiver.ReceiveAsync(TimeSpan.Zero);
+            var msg = await dead-letterReceiver.ReceiveAsync(TimeSpan.Zero);
             if (msg != null)
             {
                 foreach (var prop in msg.Properties)

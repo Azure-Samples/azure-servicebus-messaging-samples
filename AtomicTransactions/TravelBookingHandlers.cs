@@ -1,5 +1,5 @@
 //   
-//   Copyright © Microsoft Corporation, All Rights Reserved
+//   Copyright ï¿½ Microsoft Corporation, All Rights Reserved
 // 
 //   Licensed under the Apache License, Version 2.0 (the "License"); 
 //   you may not use this file except in compliance with the License. 
@@ -78,7 +78,8 @@ namespace MessagingSamples
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Failed to perform flight reservation"},
+                                        {"DeadLetterReason", "TransactionError"},
+                                        {"DeadLetterErrorDescription", "Failed to perform flight reservation"},
                                         {"Via", via}
                                     });
                             }
@@ -103,11 +104,12 @@ namespace MessagingSamples
                     else
                     {
                         await message.DeadLetterAsync(
-                            new Dictionary<string, object>
-                            {
-                                {"TransactionError", "Unrecognized input message"},
-                                {"Via", via}
-                            });
+                           new Dictionary<string, object>
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
@@ -155,16 +157,17 @@ namespace MessagingSamples
                                 Console.ResetColor();
                             }
 
-                            // now we're going to simulate the work of booking a flight,
+                            // now we're going to simulate the work of booking a hotel,
                             // which usually involves a call to a third party
 
                             // every 11th hotel booking sadly goes wrong
                             if (message.SequenceNumber%11 == 0)
                             {
                                 await message.DeadLetterAsync(
-                                    new Dictionary<string, object>
+                                   new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Failed to perform hotel reservation"},
+                                        {"DeadLetterReason", "TransactionError"},
+                                        {"DeadLetterErrorDescription", "Failed to perform hotel reservation"},
                                         {"Via", via}
                                     });
                             }
@@ -191,10 +194,11 @@ namespace MessagingSamples
                     {
                         await message.DeadLetterAsync(
                             new Dictionary<string, object>
-                            {
-                                {"TransactionError", "Unexpected input message"},
-                                {"Via", via}
-                            });
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
@@ -251,7 +255,8 @@ namespace MessagingSamples
                                 await message.DeadLetterAsync(
                                     new Dictionary<string, object>
                                     {
-                                        {"TransactionError", "Failred to perform rental car reservation"},
+                                        {"DeadLetterReason", "TransactionError"},
+                                        {"DeadLetterErrorDescription", "Failed to perform rental car reservation"},
                                         {"Via", via}
                                     });
                             }
@@ -278,10 +283,11 @@ namespace MessagingSamples
                     {
                         await message.DeadLetterAsync(
                             new Dictionary<string, object>
-                            {
-                                {"TransactionError", "Unexpected input message"},
-                                {"Via", via}
-                            });
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
@@ -345,7 +351,13 @@ namespace MessagingSamples
                     }
                     else
                     {
-                        await message.DeadLetterAsync("TransactionError", "Unrecognized input message");
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
@@ -383,8 +395,8 @@ namespace MessagingSamples
                         var body = message.GetBody<Stream>();
                         dynamic travelBooking = DeserializeTravelBooking(body);
 
-                        // do we want to book a flight? No? Let's just forward the message to
-                        // the next destination via transfer queue
+                        // Did we want to book a hotel?Did we succeed and have work to undo?  
+                        // If not, let's just forward the message to the next destination via transfer queue
                         if (travelBooking.hotel != null &&
                             travelBooking.hotel.reservationId != null)
                         {
@@ -409,7 +421,13 @@ namespace MessagingSamples
                     }
                     else
                     {
-                        await message.DeadLetterAsync("TransactionError", "Unrecognized input message");
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
@@ -489,7 +507,13 @@ namespace MessagingSamples
                     }
                     else
                     {
-                        await message.DeadLetterAsync("TransactionError", "Unrecognized input message");
+                        await message.DeadLetterAsync(
+                            new Dictionary<string, object>
+                                    {
+                                        {"DeadLetterReason", "BadMessage"},
+                                        {"DeadLetterErrorDescription", "Unrecognized input message"},
+                                        {"Via", via}
+                                    });
                     }
                     scope.Complete();
                 }
