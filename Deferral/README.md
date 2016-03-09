@@ -165,7 +165,7 @@ one due:
 
         if (deferredSteps.TryGetValue(lastProcessedRecipeStep + 1, out step))
         {
-```C# 
+``` 
 
 Once we find the desired message, we ask the Queue to give it to us, using the previously saved ```BrokeredMessage.SequenceNumber```. 
 The ```Receive```/```ReceiveAsync``` overload that accepts a ```SequenceNumber``` (the data type is ```long```) will only work for 
