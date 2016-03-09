@@ -3,7 +3,11 @@
 This sample illustrates how to use Azure Service Bus atomic transaction support by implementing a 
 travel booking scenario using the [Saga pattern](http://kellabyte.com/2012/05/30/clarifying-the-saga-pattern/)
 first formulated by [Hector Garcia Molina and Kenneth Salem [PDF]](http://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf) 
-in 1987 as a form of a long-lived transaction.     
+in 1987 as a form of a long-lived transaction. 
+
+The Saga model we will implement combines local transactions scoped to a single work-step with a model that 
+allows achieving a consistent outcome of a set of activities that span those transactions and cannot be executed 
+in a single transaction scope in a large distributed systems that may also span multiple owners.        
 
 Mind that the sample is of substantial complexity and  aimed at developers building frameworks leaning 
 on Azure Service Bus for creating robust foundations for business applications in the cloud. Therefore, the sample 
