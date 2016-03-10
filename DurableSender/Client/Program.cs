@@ -18,16 +18,18 @@
 namespace MessagingSamples
 {
     using System;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using System.Transactions;
     using Microsoft.ServiceBus;
     using Microsoft.ServiceBus.Messaging;
-    using Microsoft.ServiceBus.Samples.DurableSender;
 
     class Program : IDupdetectQueueSendReceiveSample
     {
         public async Task Run(string namespaceAddress, string queueName, string sendToken, string receiveToken)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
             var sendFactory = MessagingFactory.Create(namespaceAddress, TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken));
 
             // Create a durable sender.

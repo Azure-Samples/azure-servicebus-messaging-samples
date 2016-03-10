@@ -71,7 +71,10 @@ the overall outcome of the transaction.
 
 Service Bus does **not** support enlistment into distributed 2-phase-commit transactions via MS DTC or other transaction 
 coordinators, so you cannot perform an operation against SQL Server or Azure SQL DB and Service Bus from within the same 
-transaction scope. This is also true for the on-premises variant of Azure Service Bus, Service Bus for Windows Server 1.1. 
+transaction scope. This is also true for the on-premises variant of Azure Service Bus, Service Bus for Windows Server 1.1.
+
+> Send operations can be enlisted in a MS DTC transaction when the operation is bridged, on the client, via 
+> the Microsoft Message Queue (MSMQ). The [DurableSender](../DurableSender) sample illustrates how to do this.    
 
 Azure Service Bus *does* support .NET Framework transactions [which enlist volatile participants](https://msdn.microsoft.com/en-us/library/ms172153(v=vs.85).aspx) 
 into a transaction scope. Whether a set of Service Bus operations will become effective can therefore be made dependent 

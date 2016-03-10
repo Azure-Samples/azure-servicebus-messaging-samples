@@ -41,9 +41,9 @@ namespace MessagingSamples
         }
 
         // Create an MSMQ queue.
-        public static string CreateMsmqQueueName(string ServiceBusQueueName, string suffix)
+        public static string CreateMsmqQueueName(string hostName, string serviceBusQueueName, string suffix)
         {
-            return (".\\private$\\" + ServiceBusQueueName.Replace("/", "_") + "_" + suffix);
+            return (".\\private$\\sb_" + hostName.Replace(".", "_") + serviceBusQueueName.Replace("/", "_") + "_" + suffix);
         }
 
         // Pack a single brokered message into an MSMQ message.
