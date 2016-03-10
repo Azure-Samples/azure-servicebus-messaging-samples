@@ -138,7 +138,7 @@ part of a regular or a distributed transaction.
 The library maintains message ordering. This means that ```DurableMessageSender``` sends messages to Service Bus in the same 
 order in which the application submitted the messages.
 
-In order to avoid message duplication, the destination Service Bus Queue or Topic **must** has to have duplicate detection enabled, 
+In order to avoid message duplication, the destination Service Bus Queue or Topic **must** have duplicate detection enabled, 
 meaning the ```QueueDescription.RequiresDuplicateDetection``` property must be set to ```true```.
 
 The ```DurableMessageSender``` does not honor transactional guarantees of message batches. If the application sends multiple 
