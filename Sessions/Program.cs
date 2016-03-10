@@ -18,7 +18,6 @@
 namespace MessagingSamples
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using System.Threading;
@@ -41,11 +40,9 @@ namespace MessagingSamples
                 this.SendMessagesAsync(Guid.NewGuid().ToString(), namespaceAddress, queueName, sendToken),
                 this.SendMessagesAsync(Guid.NewGuid().ToString(), namespaceAddress, queueName, sendToken));
 
-            var receiveTask = this.ReceiveMessagesAsync(namespaceAddress, queueName, receiveToken, cts.Token);
+            this.InitializeReceiver(namespaceAddress, queueName, receiveToken, cts.Token);
             Console.ReadKey();
             cts.Cancel();
-
-            await receiveTask;
         }
 
         async Task SendMessagesAsync(string session, string namespaceAddress, string queueName, string sendToken)
@@ -57,7 +54,6 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendToken)
                 });
-            senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
 
             var sender = await senderFactory.CreateMessageSenderAsync(queueName);
 
@@ -91,7 +87,7 @@ namespace MessagingSamples
 
         }
 
-        async Task ReceiveMessagesAsync(string namespaceAddress, string queueName, string receiveToken, CancellationToken ct)
+        void InitializeReceiver(string namespaceAddress, string queueName, string receiveToken, CancellationToken ct)
         {
             var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
@@ -100,74 +96,63 @@ namespace MessagingSamples
                     TransportType = TransportType.NetMessaging, // deferral not yet supported on AMQP 
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveToken)
                 });
-            receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
 
             ct.Register(() => receiverFactory.Close());
 
             var client = receiverFactory.CreateQueueClient(queueName, ReceiveMode.PeekLock);
-            while (!ct.IsCancellationRequested)
-            {
-                var session = await client.AcceptMessageSessionAsync();
-                lock (Console.Out)
+            client.RegisterSessionHandler(
+                typeof(SessionHandler),
+                new SessionHandlerOptions
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(
-                        "\t\t\t\tSession:\tSessionId = {0}",
-                        session.SessionId);
-                    Console.ResetColor();
-                }
-                while (true)
-                {
-                    try
-                    {
-                        //receive messages from Queue
-                        var message = await session.ReceiveAsync(TimeSpan.FromSeconds(5));
-                        if (message != null)
-                        {
-                            if (message.Label != null &&
-                                message.ContentType != null &&
-                                message.Label.Equals("RecipeStep", StringComparison.InvariantCultureIgnoreCase) &&
-                                message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                var body = message.GetBody<Stream>();
+                    MessageWaitTimeout = TimeSpan.FromSeconds(5),
+                    MaxConcurrentSessions = 1
+                });
+        }
 
-                                dynamic recipeStep = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
-                                lock (Console.Out)
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Cyan;
-                                    Console.WriteLine(
-                                        "\t\t\t\tMessage received:  \n\t\t\t\t\t\tSessionId = {0}, \n\t\t\t\t\t\tMessageId = {1}, \n\t\t\t\t\t\tSequenceNumber = {2}," +
-                                        "\n\t\t\t\t\t\tContent: [ step = {3}, title = {4} ]",
-                                        message.SessionId,
-                                        message.MessageId,
-                                        message.SequenceNumber,
-                                        recipeStep.step,
-                                        recipeStep.title);
-                                    Console.ResetColor();
-                                }
-                                await message.CompleteAsync();
-                            }
-                            else
-                            {
-                                await message.DeadLetterAsync("ProcessingError", "Don't know what to do with this message");
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    catch (MessagingException e)
+        class SessionHandler : IMessageSessionAsyncHandler
+        {
+            public async Task OnMessageAsync(MessageSession session, BrokeredMessage message)
+            {
+                if (message.Label != null &&
+                  message.ContentType != null &&
+                  message.Label.Equals("RecipeStep", StringComparison.InvariantCultureIgnoreCase) &&
+                  message.ContentType.Equals("application/json", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var body = message.GetBody<Stream>();
+
+                    dynamic recipeStep = JsonConvert.DeserializeObject(new StreamReader(body, true).ReadToEnd());
+                    lock (Console.Out)
                     {
-                        if (!e.IsTransient)
-                        {
-                            Console.WriteLine(e.Message);
-                            throw;
-                        }
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.WriteLine(
+                            "\t\t\t\tMessage received:  \n\t\t\t\t\t\tSessionId = {0}, \n\t\t\t\t\t\tMessageId = {1}, \n\t\t\t\t\t\tSequenceNumber = {2}," +
+                            "\n\t\t\t\t\t\tContent: [ step = {3}, title = {4} ]",
+                            message.SessionId,
+                            message.MessageId,
+                            message.SequenceNumber,
+                            recipeStep.step,
+                            recipeStep.title);
+                        Console.ResetColor();
+                    }
+                    await message.CompleteAsync();
+
+                    if (recipeStep.step == 5)
+                    {
+                        // end of the session!
+                        await session.CloseAsync();
                     }
                 }
             }
-            await receiverFactory.CloseAsync();
-        }
+
+            public async Task OnCloseSessionAsync(MessageSession session)
+            {
+                // nothing to do
+            }
+
+            public async Task OnSessionLostAsync(Exception exception)
+            {
+                // nothing to do
+            }
+        }        
     }
 }
