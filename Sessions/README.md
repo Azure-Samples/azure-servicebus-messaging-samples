@@ -87,7 +87,7 @@ processing again when the session is accepted as the next session arrives.
 The session lock held by the session receiver is an umbrella for the message locks used by the
 ```ReceiveMode.PeekLock``` mode. A receiver cannot have two messages concurrently "in flight",
 but the messages *must* be processed in order. A new message can only be obtained when the prior
-message has been completed.        
+message has been completed. 
 
 ### The sample
 
