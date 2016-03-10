@@ -61,8 +61,8 @@ Imperatively, the client calls ```QueueClient.AcceptMessageSession```/
 as we'll show below.
 
 When the session is accepted and while it is held by a client, that client holds an exclusive lock on
-*all* messages with that session's ``´SessionId``` that exist in the Queue or Subscription, and also 
-on all messages that will arrive with that ``SessionId`` while the session is held.
+*all* messages with that session's  ```SessionId``` that exist in the Queue or Subscription, and also 
+on all messages that will arrive with that  ```SessionId ``` while the session is held.
 
 When multiple concurrent receivers now pull from the queue, the messages belonging to a particular 
 session are dispatched to the specific receiver that currently holds the lock for that session.
@@ -71,7 +71,7 @@ de-multiplexed to different receivers and those receivers can also sit on differ
 since the lock management happens inside Service Bus.
 
 The Queue is, however, still a queue. There is no random access. The illustration above shows
-three concurrent ```MessageSession`` receivers, which all *must* actively take messages off the 
+three concurrent ```MessageSession``` receivers, which all *must* actively take messages off the 
 Queue for every receiver to make progress. The Session with ```SessionId=4``` above has no 
 active, owning client, which means that no messages will be delivered to anyone until that 
 message has been taken by a newly created owning session receiver.  
