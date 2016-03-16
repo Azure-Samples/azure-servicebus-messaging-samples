@@ -144,7 +144,7 @@ namespace MessagingSamples
                 }
                 else
                 {
-                    await message.DeadletterAsync("BadMessage", "Unexpected message");
+                    await message.DeadLetterAsync("BadMessage", "Unexpected message");
                 }
             }
 
