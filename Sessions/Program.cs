@@ -45,7 +45,7 @@ namespace MessagingSamples
             cts.Cancel();
         }
 
-        async Task SendMessagesAsync(string session, string namespaceAddress, string queueName, string sendToken)
+        async Task SendMessagesAsync(string sessionId, string namespaceAddress, string queueName, string sendToken)
         {
             var senderFactory = MessagingFactory.Create(
                 namespaceAddress,
@@ -70,7 +70,7 @@ namespace MessagingSamples
             {
                 var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data[i]))))
                 {
-                    SessionId = session,
+                    SessionId = sessionId,
                     ContentType = "application/json",
                     Label = "RecipeStep",
                     MessageId = i.ToString(),
@@ -84,7 +84,6 @@ namespace MessagingSamples
                     Console.ResetColor();
                 }
             }
-
         }
 
         void InitializeReceiver(string namespaceAddress, string queueName, string receiveToken, CancellationToken ct)
@@ -105,7 +104,8 @@ namespace MessagingSamples
                 new SessionHandlerOptions
                 {
                     MessageWaitTimeout = TimeSpan.FromSeconds(5),
-                    MaxConcurrentSessions = 1
+                    MaxConcurrentSessions = 1,
+                    AutoComplete = false
                 });
         }
 
@@ -141,6 +141,10 @@ namespace MessagingSamples
                         // end of the session!
                         await session.CloseAsync();
                     }
+                }
+                else
+                {
+                    await message.DeadletterAsync("BadMessage", "Unexpected message");
                 }
             }
 
