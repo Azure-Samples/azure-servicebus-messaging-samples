@@ -40,8 +40,7 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(sendKeyName, sendKey)
                 });
-            senderFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
+            
             var receiverFactory = MessagingFactory.Create(
                 namespaceAddress,
                 new MessagingFactorySettings
@@ -49,8 +48,7 @@ namespace MessagingSamples
                     TransportType = TransportType.Amqp,
                     TokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(receiveKeyName, receiveKey)
                 });
-            receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
-
+            
             var sender = senderFactory.CreateMessageSender(basicQueueName);
             var receiver = receiverFactory.CreateMessageReceiver(basicQueue2Name);
             var rr = new RequestReplySender(sender, receiver);

@@ -36,7 +36,6 @@ namespace MessagingSamples
                 });
             try
             {
-                receiverFactory.RetryPolicy = new RetryExponential(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5), 10);
                 var receiver = receiverFactory.CreateMessageReceiver(queueName, ReceiveMode.PeekLock);
                 try
                 {
@@ -45,6 +44,7 @@ namespace MessagingSamples
                         receiver,
                         async m =>
                         {
+                            Console.WriteLine("Got {0}", m.Label);
                             switch (m.Label)
                             {
                                 case "requestA":

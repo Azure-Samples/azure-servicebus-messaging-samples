@@ -29,8 +29,8 @@ namespace MessagingSamples
     {
         readonly Uri namespaceUri;
         readonly MessageReceiver receiver;
-        readonly Dictionary<Uri, FactoryTokenProviderTuple> responderFactories = new Dictionary<Uri, FactoryTokenProviderTuple>();
-        readonly object responderFactoriesMutex = new object();
+        readonly Dictionary<Uri, ReplyDestination> responderFactories = new Dictionary<Uri, ReplyDestination>();
+        readonly object replyDestinationsMutex = new object();
         readonly Func<BrokeredMessage, Task<BrokeredMessage>> responseFunction;
 
         public RequestReplyResponder(Uri namespaceUri, MessageReceiver receiver, Func<BrokeredMessage, Task<BrokeredMessage>> responseFunction)
@@ -52,13 +52,8 @@ namespace MessagingSamples
         public async Task Run(CancellationToken token)
         {
             var tcs = new TaskCompletionSource<bool>();
-            token.Register(
-                () =>
-                {
-                    this.receiver.Close();
-                    tcs.SetResult(true);
-                });
-            this.receiver.OnMessageAsync(rq => this.Respond(rq, this.responseFunction), new OnMessageOptions {AutoComplete = false});
+            token.Register(() => { this.receiver.Close(); tcs.SetResult(true); });
+            this.receiver.OnMessageAsync(rq => this.Respond(rq, this.responseFunction), new OnMessageOptions { AutoComplete = false });
             await tcs.Task;
         }
 
@@ -71,71 +66,37 @@ namespace MessagingSamples
 
                 if (Uri.TryCreate(request.ReplyTo, UriKind.RelativeOrAbsolute, out targetUri))
                 {
-                    string replyToken = null;
+                    // make the URI absolute to this namespace 
                     if (!targetUri.IsAbsoluteUri)
                     {
                         targetUri = new Uri(this.namespaceUri, targetUri);
                     }
-                    var queryPortion = targetUri.Query;
-                    if (!string.IsNullOrEmpty(queryPortion) && queryPortion.Length > 1)
-                    {
-                        var nvm = HttpUtility.ParseQueryString(queryPortion.Substring(1));
-                        var tokenString = nvm["tk"];
-                        if (tokenString != null)
-                        {
-                            replyToken = tokenString;
-                        }
-                    }
+                    var replyToken = GetReplyToken(targetUri);
                     if (replyToken == null)
                     {
-                        await request.DeadLetterAsync("NoReplyToToken", "No 'tk' query parameter in ReplyTo field found");
+                        await request.DeadLetterAsync("NoReplyToToken", "No 'tk' query parameter in ReplyTo field URI found");
                         return;
                     }
+                    // truncate the query portion of the URI
                     targetUri = new Uri(targetUri.GetLeftPart(UriPartial.Path));
-
-
+                    
                     // now we're reasonably confident that the input message can be
                     // replied to, so let's execute the message processing
-
                     try
                     {
+                        // call the callback
                         var reply = await handleRequest(request);
+                        // set the correlation-id on the reply 
                         reply.CorrelationId = request.MessageId;
 
-                        FactoryTokenProviderTuple factory;
-
-                        lock (this.responderFactoriesMutex)
-                        {
-                            var signatureTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(replyToken);
-                            if (this.responderFactories.TryGetValue(targetUri, out factory))
-                            {
-                                factory.TokenProvider.TokenProvider =
-                                    signatureTokenProvider;
-                            }
-                            else
-                            {
-                                var tokenProvider = new DelegatingTokenProvider(
-                                    signatureTokenProvider
-                                    );
-                                var receiverFactory = MessagingFactory.Create(
-                                    targetUri.GetLeftPart(UriPartial.Authority),
-                                    new MessagingFactorySettings
-                                    {
-                                        TransportType = TransportType.Amqp,
-                                        TokenProvider = tokenProvider
-                                    });
-                                factory = new FactoryTokenProviderTuple {Factory = receiverFactory, TokenProvider = tokenProvider};
-                                this.responderFactories.Add(targetUri, factory);
-                            }
-                        }
-
-                        var sender = await factory.Factory.CreateMessageSenderAsync(targetUri.AbsolutePath.Substring(1));
+                        var replyDestination = this.GetOrCreateReplyDestination(replyToken, targetUri);
+                        var sender = await replyDestination.Factory.CreateMessageSenderAsync(targetUri.AbsolutePath.Substring(1));
                         await sender.SendAsync(reply);
                         await request.CompleteAsync();
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        await request.DeadLetterAsync();
+                        await request.DeadLetterAsync("ErrorHandlingMessage", e.Message);
                     }
                 }
                 else
@@ -145,7 +106,45 @@ namespace MessagingSamples
             }
         }
 
-        class FactoryTokenProviderTuple
+        ReplyDestination GetOrCreateReplyDestination(string replyToken, Uri targetUri)
+        {
+            ReplyDestination replyDestination;
+            lock (this.replyDestinationsMutex)
+            {
+                var signatureTokenProvider = TokenProvider.CreateSharedAccessSignatureTokenProvider(replyToken);
+                if (this.responderFactories.TryGetValue(targetUri, out replyDestination))
+                {
+                    replyDestination.TokenProvider.TokenProvider = signatureTokenProvider;
+                }
+                else
+                {
+                    var tokenProvider = new DelegatingTokenProvider(signatureTokenProvider);
+                    var receiverFactory = MessagingFactory.Create(targetUri.GetLeftPart(UriPartial.Authority),
+                                            new MessagingFactorySettings { TransportType = TransportType.Amqp, TokenProvider = tokenProvider });
+                    replyDestination = new ReplyDestination { Factory = receiverFactory, TokenProvider = tokenProvider };
+                    this.responderFactories.Add(targetUri, replyDestination);
+                }
+            }
+            return replyDestination;
+        }
+
+        static string GetReplyToken(Uri targetUri)
+        {
+            string replyToken = null;
+            var queryPortion = targetUri.Query;
+            if (!string.IsNullOrEmpty(queryPortion) && queryPortion.Length > 1)
+            {
+                var nvm = HttpUtility.ParseQueryString(queryPortion.Substring(1));
+                var tokenString = nvm["tk"];
+                if (tokenString != null)
+                {
+                    replyToken = tokenString;
+                }
+            }
+            return replyToken;
+        }
+
+        class ReplyDestination
         {
             public MessagingFactory Factory { get; set; }
             public DelegatingTokenProvider TokenProvider { get; set; }
