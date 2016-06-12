@@ -4,11 +4,11 @@ This sample shows interacting with Service Bus Queues using a set of API gesture
 flexible than the ``QueueClient`` class introduced in the basic [QueuesGettingStarted](../QueuesGettingStarted) sample. 
 
 Specifically, this sample introduces the ```MessagingFactory``` and the ```MessageSender``` and ```MessageReceiver``` clients that 
-you can create from the factory. The advantage of using these client classses is that they work interchangeable across Queues 
-and Topics for sending and across Queues and Subvscriptions for receiving, and therefore provide agility with regards to the 
+you can create from the factory. The advantage of using these client classes is that they work interchangeably across Queues 
+and Topics for sending and across Queues and Subscriptions for receiving, and therefore provide agility with regards to the 
 messaging topology. 
 
-If you intially choose a Queue for a communication path, but later decide to switch to a Topic with multiple subscriptions to allow 
+If you initially choose a Queue for a communication path, but later decide to switch to a Topic with multiple subscriptions to allow 
 further consumers to get the sender's messages, ```MessageSender``` and ```MessageReceiver``` based code can be used with that 
 new topology without changes except for configuring different paths.     
 
@@ -59,7 +59,7 @@ async Task SendMessagesAsync(string namespaceAddress, string queueName, string s
 ```
 
 All client objects created through this factory will be initialized with a default "retry policy" and will automatically perform
-retries following the rules of the policy when transient errors occur. The policy can be overriden using the ```RetryPolicy``` property: 
+retries following the rules of the policy when transient errors occur. The policy can be overridden using the ```RetryPolicy``` property: 
 
 ``` C#
 // this line is not in the code sample. Only set or override when you have good reason to do so
@@ -242,7 +242,7 @@ Instead of processing the message, the sample code writes out the message proper
 those properties that the broker sets or modifies as the message passes through:
 
 * the ```SequenceNumber``` property is a monotonically increasing and gapless sequence number assigned to each message
-  as it is processed by the broker. The sequence number is authoritiative for determining order of arrival. For partitioned
+  as it is processed by the broker. The sequence number is authoritative for determining order of arrival. For partitioned
   entities, the lower 48 bits hold the per-partition sequence number, the upper 16 bits hold the partition number.
 * the ```EnqueuedTimeUtc``` property reflects the time at which the message has been committed by the processing
   broker node. There may be clock skew from UTC and also between different broker nodes. If you need to determine order
@@ -286,7 +286,7 @@ You can find out more about this in the [Deadletter](../Deadletter) sample.
 ```
 
 The ```ReceiveMessagesAsync``` method closes with an await statement that will wait for completion of the ```TaskCompletionSource```
-we initialized above and that will be set (and therefore unblock this wait) once the cancellation token fires and procesisng stops.
+we initialized above and that will be set (and therefore unblock this wait) once the cancellation token fires and processing stops.
 
 ``` C#
   await doneReceiving.Task;
@@ -294,7 +294,7 @@ we initialized above and that will be set (and therefore unblock this wait) once
 
 ## Run()
 
-The Run() method that is invoked by the common sample entrypoint starts sender and receiver in parallel and waits for 
+The Run() method that is invoked by the common sample entry point starts sender and receiver in parallel and waits for 
 both to complete before exiting. The cancellation token passed to the receiver method is being triggered when the 
 user presses any key sometime after sender and receiver have been kicked off. 
 
