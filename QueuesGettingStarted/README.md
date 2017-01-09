@@ -143,7 +143,7 @@ The ```OnMessage(Async)``` method accepts a callback function for handling a sin
 * ```MaxConcurrentCalls``` controls how many concurrent threads are at most being used for invoking the callback method concurrently.
    Concurrent execution may significantly increase the overall throughput, but you must treat the callback as a multi-threaded 
    operation and appropriately guard all access to shared variables and objects.
-* The ```AutoRenewTimeout``` option (not shown here) is discussed in the [LockRenewal](../LockRenewal) sample
+* The ```AutoRenewTimeout``` option (not shown here) allows adjusting the lock renewal timeout. Messages processed in the OnMessage callback are automatically renewed while the callback remains pending and the application processes the message.
    
 The asynchronous variant ```OnMessageAsync``` used here accepts an asynchronous callback method, it is not an asynchronous, awaitable method by itself. 
 **You should prefer the asynchronous variant whenever possible**. 
