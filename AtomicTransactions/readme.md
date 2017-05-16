@@ -125,9 +125,9 @@ Service Bus to execute the operation to complete (or defer or dead-letter) the i
 capture the resulting output message on the same message log in a single atomic operation.
 
 ```
-        /---\  [M1] == Complete() ===> +-----+                  +-----+
-       |  P  |                         |  T  |                  |  Q  |
-        \---/  [M2] == Send() =======> +-----+ [M2] == Fwd ===> +-----+
+        /---\  [M1] == Receive() <==== +-----+                  +-----+
+       |  P  | [M2] == Send() =======> |  T  | [M2] == Fwd ===> |  Q  |
+        \---/  [M1] == Complete() ===> +-----+                  +-----+
           :                                                        ^
           :.................. effective transfer path .............: 
         
