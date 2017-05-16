@@ -39,7 +39,7 @@ and many papers for exploring theory and history of transaction processing. Thes
 
 Azure Service Bus is a transactional message broker and ensures transactional integrity for all internal operations 
 against its message stores and the respective indices. All transfers of messages inside of Service Bus, such as moving 
-messages to a [Dead-Letter Queue]/../Deadletter) or [automatic forwarding](../AutoForward) of messages between entities are 
+messages to a [Dead-Letter Queue](/../Deadletter) or [automatic forwarding](../AutoForward) of messages between entities are 
 transactional.What that means is that if Service Bus reports a message as accepted it has already been stored and labeled with 
 a sequence number, and from there onwards, any transfers inside of Service Bus are coordinated operations across entities, and will 
 neither lead to loss (source succeeds and target fails) or to duplication (source fails and target succeeds) of the message. 
