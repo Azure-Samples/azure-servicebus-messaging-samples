@@ -59,6 +59,9 @@ The operations that can be performed within a transaction scope are:
     * ```Deadletter```, ```DeadletterAsync```
     * ```Defer```, ```DeferAsync```
     * ```RenewLock```, ```RenewLockAsync```
+* ```MessageSession```:
+    * ```SetState```, ```SetStateAsync```
+    * ```GetState```, ```GetStateAsync```
     
 Quite apparently missing are all receive operations. The assumption made for Service Bus transactions is that the application
 acquires messages, using the ReceiveMode.PeekLock mode, inside some receive loop or with an OnMessage callback, and only then 
